@@ -69,6 +69,11 @@ required = [
     "conversation-local Co-STORM board",
     "co_storm_mind_map",
     "co_storm_report",
+    "choice-first steering",
+    "one question at a time",
+    "native choice UI",
+    "mouse click",
+    "request_user_input",
 ]
 
 missing = [item for item in required if item not in combined]
@@ -79,6 +84,8 @@ forbidden = [
     "Co-STORM-style interactive exploration is documented but still in development",
     "Co-STORM style exploration (in development)",
     "Co-STORM is documented for future interactive exploration",
+    "reply with a number",
+    "回复数字即可",
 ]
 
 present_forbidden = [item for item in forbidden if item in combined]

@@ -109,13 +109,15 @@ Co-STORM is conversation-first. Do not create the four standard STORM artifacts 
 
 Warm start with a mini Classic STORM pass: include `Basic fact writer`, add up to two focused specialists, run one interview turn per perspective, and use up to two non-empty search queries per turn. Organize the gathered evidence into the initial cited mind map before inviting user steering.
 
+Use choice-first steering for user interaction. Ask one question at a time, prefer two or three meaningful multiple-choice options, put the recommended option first, and keep each option short enough to select by mouse click. In Codex or any environment with a native choice UI, call that UI directly; in Codex Desktop, use `request_user_input` when available. Do not render numeric-reply prompts when a native choice UI is available. Avoid broad open-ended questions unless the decision cannot be represented as useful choices.
+
 For each interaction turn:
 
 1. Incorporate the user's steering into `current_focus`.
 2. Choose one role: general expert, rotating specialist, or moderator.
 3. Use the moderator after two answer-only turns, repeated ground, or an overly narrow branch.
 4. Retrieve more evidence when needed, answer with citations, and update the board.
-5. Show the user a compact update: answer, mind-map delta, open questions, and suggested next directions.
+5. Show the user a compact update: answer, mind-map delta, open questions, and one choice-first steering prompt for suggested next directions.
 
 Mind-map maintenance:
 

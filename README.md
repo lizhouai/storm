@@ -60,7 +60,7 @@ Co-STORM style exploration:
 Use storm in Co-STORM mode to explore commercial paths for embodied AI. Start with a roundtable and maintain a mind-map style structure.
 ```
 
-In Co-STORM mode, the agent keeps a conversation-local Co-STORM board with a cited mind map, open questions, sources, unused evidence, and current focus. When you ask to conclude or write the report, it generates a final cited report from that board.
+In Co-STORM mode, the agent keeps a conversation-local Co-STORM board with a cited mind map, open questions, sources, unused evidence, and current focus. It uses choice-first steering: one question at a time, two or three meaningful options, and the native choice UI when available so you can keep steering with a mouse click. When you ask to conclude or write the report, it generates a final cited report from that board.
 
 Local-document constrained research:
 
@@ -115,7 +115,7 @@ Classic STORM follows this sequence:
 6. Write the standard artifact bundle.
 7. Polish, reorder citations, verify claims, and check artifact encoding.
 
-Co-STORM is used when you explicitly ask for interactive exploration, roundtable discussion, user steering, or a mind map. It starts with a mini STORM warm start, maintains a cited mind map during the conversation, and writes the final report when you ask to conclude.
+Co-STORM is used when you explicitly ask for interactive exploration, roundtable discussion, user steering, or a mind map. It starts with a mini STORM warm start, maintains a cited mind map during the conversation, asks click-style steering questions one at a time, and writes the final report when you ask to conclude.
 
 ## Repository Structure
 

@@ -389,6 +389,44 @@ co_storm_board:
 
 When the board is too large to show in full, keep the full board mentally in context and show only a compact delta plus the most relevant branch.
 
+### Choice-First Steering
+
+Borrow the interaction style from the brainstorming skill: keep the user in flow by asking one question at a time and making the next move selectable.
+
+Use choice-first steering whenever Co-STORM needs user direction:
+
+- Ask one question at a time.
+- Prefer two or three meaningful multiple-choice options.
+- Put the recommended option first and label it as recommended when the UI supports labels.
+- Each option should be a real tradeoff or research path, not filler.
+- Keep labels short enough for a mouse click and descriptions to one sentence.
+- Use a native choice UI when available so the user can continue with a mouse click.
+- In Codex Desktop, use `request_user_input` when that tool is available.
+- Do not render numeric-reply prompts in environments that support native choice UI.
+- If no native choice UI exists, show compact labeled options and briefly state that clickable choices are unavailable in the current environment.
+- Do not include a generic `Other` option when the native UI already provides free-form input.
+- Use open-ended questions only when meaningful choices would hide the real ambiguity.
+
+Choice prompt shape:
+
+```yaml
+choice_prompt:
+  question: "{single steering question}"
+  options:
+    - label: "{recommended short label}"
+      description: "{one-sentence impact or tradeoff}"
+      recommended: true
+    - label: "{second short label}"
+      description: "{one-sentence impact or tradeoff}"
+      recommended: false
+    - label: "{third short label}"
+      description: "{one-sentence impact or tradeoff}"
+      recommended: false
+  freeform_allowed: true|false
+```
+
+Good Co-STORM steering questions decide the next research move, such as deepen the current branch, broaden to a neighboring branch, compare two claims, invite a moderator, or produce the final report. Avoid asking "what next?" without options.
+
 ### Turn Protocol
 
 For each Co-STORM turn:
@@ -405,7 +443,7 @@ For each Co-STORM turn:
    - `Answer`
    - `Mind-map update`
    - `Open questions`
-   - `Suggested next directions`
+   - `Choice-first steering prompt`
 
 Do not ask the user to confirm obvious next exploration steps. Offer concrete next directions and continue when the user picks one or asks a follow-up.
 
