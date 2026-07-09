@@ -103,17 +103,21 @@ Co-STORM is only used when you explicitly ask for interactive exploration, round
 
 ```text
 storm/
-  SKILL.md
   README.md
-  agents/
-    openai.yaml
-  references/
-    storm-method.md
+  LICENSE
+  skills/
+    storm/
+      SKILL.md
+      agents/
+        openai.yaml
+      references/
+        storm-method.md
 ```
 
-- `SKILL.md` is the skill entry point and activation contract.
-- `references/storm-method.md` contains the detailed algorithm, prompts, schemas, and quality checks.
-- `agents/openai.yaml` provides display metadata for OpenAI-style agent surfaces.
+- `skills/storm/SKILL.md` is the skill entry point and activation contract.
+- `skills/storm/references/storm-method.md` contains the detailed algorithm, prompts, schemas, and quality checks.
+- `skills/storm/agents/openai.yaml` provides display metadata for OpenAI-style agent surfaces.
+- The repository root intentionally does not contain `SKILL.md`, so `npx skills add lizhouai/storm` installs the full `skills/storm/` bundle instead of a single file.
 
 ## Compatibility
 
