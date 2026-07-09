@@ -1,6 +1,7 @@
 # STORM Research Skill
 
-Current version: `v0.2.0`
+[![Release](https://img.shields.io/github/v/release/lizhouai/storm?label=release&style=for-the-badge&labelColor=555555&color=007ec6)](https://github.com/lizhouai/storm/releases/latest)
+[![License](https://img.shields.io/github/license/lizhouai/storm?label=license&style=for-the-badge&labelColor=555555&color=97ca00)](LICENSE)
 
 An Agent Skill for STORM-style deep research: perspective-guided interviews, source-grounded synthesis, structured outlines, inline citations, and verification notes.
 
