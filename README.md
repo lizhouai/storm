@@ -22,14 +22,14 @@ It helps the agent:
 - produce the standard STORM artifact bundle
 - verify citation coverage, unsupported claims, source gaps, and stale-source risks
 
-The default mode is classic STORM. Co-STORM-style interactive exploration is documented but still in development.
+The default mode is classic STORM. Co-STORM mode is available for interactive exploration, roundtable discussion, user steering, and mind-map driven research.
 
 ## Install
 
 Install with:
 
 ```bash
-npx skills add lizhouai/storm
+npx skills add lizhouai/storm --full-depth
 ```
 
 ## Usage
@@ -54,11 +54,13 @@ General agent prompt:
 Use the storm skill to write a source-grounded background review of open-source LLM evaluation frameworks.
 ```
 
-Co-STORM style exploration (in development):
+Co-STORM style exploration:
 
 ```text
 Use storm in Co-STORM mode to explore commercial paths for embodied AI. Start with a roundtable and maintain a mind-map style structure.
 ```
+
+In Co-STORM mode, the agent keeps a conversation-local Co-STORM board with a cited mind map, open questions, sources, unused evidence, and current focus. When you ask to conclude or write the report, it generates a final cited report from that board.
 
 Local-document constrained research:
 
@@ -76,6 +78,11 @@ Unless you request another format, the skill produces a standard STORM artifact 
 - `storm_gen_article_polished.html`: polished final article with references and verification notes
 
 If you explicitly ask for chat-only or no files, the skill can instead return a compact in-chat brief with perspectives, query log, citations, references, and verification notes.
+
+Co-STORM is conversation-first and does not create the four standard STORM files unless you explicitly ask for file output. If you do request files, it writes:
+
+- `co_storm_mind_map.<format>`: the cited mind map and open questions
+- `co_storm_report.<format>`: the final report synthesized from the mind map
 
 ## When To Use It
 
@@ -108,7 +115,7 @@ Classic STORM follows this sequence:
 6. Write the standard artifact bundle.
 7. Polish, reorder citations, verify claims, and check artifact encoding.
 
-Co-STORM is documented for future interactive exploration, roundtable discussion, user steering, and mind-map workflows, but the mode is still in development.
+Co-STORM is used when you explicitly ask for interactive exploration, roundtable discussion, user steering, or a mind map. It starts with a mini STORM warm start, maintains a cited mind map during the conversation, and writes the final report when you ask to conclude.
 
 ## Repository Structure
 
@@ -128,7 +135,7 @@ storm/
 - `skills/storm/SKILL.md` is the skill entry point and activation contract.
 - `skills/storm/references/storm-method.md` contains the detailed algorithm, prompts, schemas, and quality checks.
 - `skills/storm/agents/openai.yaml` provides display metadata for OpenAI-style agent surfaces.
-- The repository root intentionally does not contain `SKILL.md`, so `npx skills add lizhouai/storm` installs the full `skills/storm/` bundle instead of a single file.
+- The repository root intentionally does not contain `SKILL.md`; use `--full-depth` so the skills CLI discovers the full `skills/storm/` bundle.
 
 ## Compatibility
 
@@ -147,7 +154,7 @@ npx skills update storm -g
 Or reinstall from the repository:
 
 ```bash
-npx skills add lizhouai/storm -g --copy
+npx skills add lizhouai/storm -g --copy --full-depth
 ```
 
 ## Development
@@ -162,13 +169,13 @@ cd storm
 Validate local discovery:
 
 ```bash
-npx skills add . --list
+npx skills add . --list --full-depth
 ```
 
 Install your local working copy while developing:
 
 ```bash
-npx skills add . -g --copy
+npx skills add . -g --copy --full-depth
 ```
 
 ## License

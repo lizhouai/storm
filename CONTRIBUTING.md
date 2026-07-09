@@ -53,7 +53,9 @@ from pathlib import Path
 
 skill = Path("skills/storm/SKILL.md").read_text(encoding="utf-8")
 method = Path("skills/storm/references/storm-method.md").read_text(encoding="utf-8")
-combined = skill + "\n" + method
+readme = Path("README.md").read_text(encoding="utf-8")
+metadata = Path("skills/storm/agents/openai.yaml").read_text(encoding="utf-8")
+combined = "\n".join([skill, method, readme, metadata])
 
 required = [
     "name: storm",
@@ -63,11 +65,25 @@ required = [
     "storm_gen_article_polished",
     ".results/<topic-slug>/",
     "If the user does not specify a format, use `html`",
+    "Co-STORM",
+    "conversation-local Co-STORM board",
+    "co_storm_mind_map",
+    "co_storm_report",
 ]
 
 missing = [item for item in required if item not in combined]
 if missing:
     raise SystemExit(f"Missing required contract text: {missing}")
+
+forbidden = [
+    "Co-STORM-style interactive exploration is documented but still in development",
+    "Co-STORM style exploration (in development)",
+    "Co-STORM is documented for future interactive exploration",
+]
+
+present_forbidden = [item for item in forbidden if item in combined]
+if present_forbidden:
+    raise SystemExit(f"Forbidden obsolete Co-STORM status text: {present_forbidden}")
 
 print("Skill contract checks passed.")
 PY

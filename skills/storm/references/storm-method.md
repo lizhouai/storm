@@ -14,7 +14,7 @@
 - Citation verification
 - Local runner mode
 - Quality comparison heuristics
-- Co-STORM optional mode
+- Co-STORM interactive mode
 
 ## Classic STORM Algorithm
 
@@ -49,6 +49,7 @@ Choose the smallest deliverable that still preserves source-grounded reasoning.
 | "Wikipedia-style", "完整长文", "generate article" | Full article | Full outline, section-by-section writing, artifact paths if saved |
 | "run this STORM script/repo" | Local runner | Execute requested tool, then summarize and verify generated artifacts |
 | "quick answer", "chat only", "no files" | Chat brief | In-chat report only |
+| "Co-STORM", "roundtable", "mind map", "let me steer" | Co-STORM | Interactive cited mind map, then final report when requested |
 
 For Chinese prompts, keep the final report in Chinese by default. Preserve standard English terms in parentheses when they help precision.
 
@@ -312,7 +313,7 @@ Windows and encoding hygiene:
 1. Set Python stdout to UTF-8 when printing Chinese or other non-ASCII text.
 2. HTML artifacts must include `<meta charset="utf-8">`.
 3. Read each generated `.html`, `.txt`, and `.md` artifact back with strict UTF-8.
-4. Scan for mojibake markers: `�`, `瀹`, `涓`, `鐨`, `妫`, `鎶`, `锛`, repeated `????`, or repeated `����`.
+4. Scan for mojibake markers by code point, such as `U+FFFD`, `U+7039`, `U+6D93`, `U+9428`, `U+59AB`, `U+93B6`, `U+951B`, repeated replacement-character runs, or repeated question-mark runs.
 5. If files were written in GBK/GB18030, convert only affected text artifacts to UTF-8, then verify by reading them back.
 6. Do not trust `Get-Content` or terminal preview alone; terminal decoding can make good files look bad or bad files look good.
 
@@ -332,35 +333,129 @@ When comparing a manual STORM brief with a full local STORM article, judge them 
 
 A longer article is not automatically better. Default STORM should still create the four standard files; adjust article length inside those files according to the user's request.
 
-## Co-STORM Optional Mode
+## Co-STORM Interactive Mode
 
-Use only when the user asks for collaboration, roundtable discourse, interactive steering, or a mind map.
+Use Co-STORM only when the user asks for collaboration, roundtable discourse, interactive steering, or a mind map. Use Classic STORM instead when the user wants one finished report and does not need to steer the research process.
 
-Co-STORM sequence:
+Co-STORM is conversation-first. It maintains a conversation-local Co-STORM board and a cited mind map during the discussion. It does not create the four standard STORM artifacts unless the user explicitly requests file output.
 
-1. Warm start with a mini STORM pass to collect background information.
-2. Create a hierarchical knowledge base/mind map from cited information.
-3. Generate initial experts from the topic and current focus.
-4. Let the user inject questions or steering utterances.
-5. On system turns, choose among general expert, rotating specialists, and moderator.
-6. Use the moderator after several answer-only turns or when discussion gets narrow.
-7. Insert cited information into the mind map by question/query intent.
-8. Reorganize the mind map by expanding overloaded nodes and merging empty or single-child nodes.
-9. Generate the final report from the mind map.
+### Warm Start Defaults
 
-Moderator behavior:
+Run a mini Classic STORM pass before the first open-ended user steering prompt:
 
-- Look for relevant retrieved snippets that have not been used or cited.
-- Prefer snippets close to the topic but not redundant with the last query.
-- Ask one grounded question that naturally follows from the last turn.
-- Cite the information that inspired the question.
+| Parameter | Default |
+|---|---:|
+| Required perspective | `Basic fact writer` |
+| Additional specialists | Up to 2 |
+| Interview turns per perspective | 1 |
+| Search queries per turn | Up to 2 |
+| Search results per query | Up to 3 |
 
-Mind-map insertion options:
+The warm start should identify the initial scope, obvious subtopics, evidence-backed facts, disputed points, and promising questions. Preserve all source-grounding rules from Classic STORM.
 
-```text
-insert
-step: {existing child node}
-create: {new child node}
+### Co-STORM Board Schema
+
+Maintain this board in the conversation context and update it after each system turn:
+
+```yaml
+co_storm_board:
+  topic: "{display topic}"
+  scope: "{current boundaries and exclusions}"
+  current_focus: "{active branch or question}"
+  open_questions:
+    - id: Q1
+      question: "{unresolved question}"
+      priority: high|medium|low
+  mind_map:
+    - node: "{topic branch}"
+      claims:
+        - claim: "{evidence-backed claim}"
+          citations: ["[1]"]
+          status: supported|partial|disputed|uncertain
+      children: []
+  sources:
+    - id: "[1]"
+      title: "{source title}"
+      url_or_doc_id: "{url or local document id}"
+      date: "{publication or retrieval date when relevant}"
+      reliability_note: "{primary, secondary, stale, weak, disputed, etc.}"
+  unused_evidence_queue:
+    - source_id: "[2]"
+      note: "{relevant snippet or evidence note not yet used}"
+      suggested_node: "{where it may fit}"
+  assumptions_and_decisions:
+    - "{scope choice, user preference, or unresolved limitation}"
 ```
 
-Use classic STORM instead of Co-STORM when the user wants a single finished report and does not need to steer the research process.
+When the board is too large to show in full, keep the full board mentally in context and show only a compact delta plus the most relevant branch.
+
+### Turn Protocol
+
+For each Co-STORM turn:
+
+1. Interpret the user's latest steering utterance and update `current_focus`.
+2. Select exactly one role for the response:
+   - `general expert` for broad synthesis across the mind map.
+   - `specialist` for a specific technical, historical, market, policy, or methodological branch.
+   - `moderator` for broadening, reconnecting branches, or surfacing unused evidence.
+3. Retrieve or inspect more evidence only when the current board is insufficient.
+4. Answer from cited evidence, explicitly marking uncertain or unsupported points.
+5. Insert new evidence into the mind map under the node matching the question or query intent.
+6. Return a compact response with:
+   - `Answer`
+   - `Mind-map update`
+   - `Open questions`
+   - `Suggested next directions`
+
+Do not ask the user to confirm obvious next exploration steps. Offer concrete next directions and continue when the user picks one or asks a follow-up.
+
+### Moderator Behavior
+
+Use the moderator after two answer-only turns, when the discussion repeats, when it follows a single narrow branch for too long, or when the unused evidence queue contains relevant material.
+
+The moderator should:
+
+- Look for relevant retrieved snippets that have not been used or cited.
+- Prefer evidence close to the topic but not redundant with the last answer.
+- Ask one grounded question that naturally follows from the current mind map.
+- Cite the information that inspired the question.
+- Suggest whether to deepen, broaden, compare, or summarize next.
+
+### Mind-Map Maintenance
+
+Insertion options:
+
+```text
+insert: add evidence to an existing node
+create: create a new child node
+split: divide an overloaded node into clearer child nodes
+merge: combine duplicate or near-empty sibling nodes
+prune: remove empty nodes that carry no claim or open question
+```
+
+Rules:
+
+- Attach citations to the smallest claim they support.
+- Keep disputed claims as separate attributed claims instead of smoothing over disagreement.
+- Preserve local document ids and page or section names when using a provided corpus.
+- Expand overloaded nodes before adding more citations to them.
+- Merge empty or single-child nodes only when the merge does not hide an important distinction.
+
+### Final Report
+
+Generate the final report when the user asks to conclude, summarize, produce an article, or write the report. The report should be built from the mind map, not from a fresh unstructured summary.
+
+Include:
+
+- Scope and assumptions.
+- Synthesized answer organized by the final mind-map structure.
+- Inline citations in first-appearance order.
+- References.
+- Verification notes covering unsupported claims removed, disputed evidence, stale-source risks, thin branches, and retrieval failures.
+
+If the user explicitly asks for files, create:
+
+- `co_storm_mind_map.<format>`
+- `co_storm_report.<format>`
+
+Use the requested output directory, or `.results/<topic-slug>/` if no path is specified. If no format is specified, use `html`. HTML files must follow the same UTF-8 and offline-readable requirements as standard STORM artifacts.
