@@ -18,12 +18,11 @@ It helps the agent:
 - run search-backed simulated interviews from each perspective
 - collect evidence into an information table
 - refine an outline from the gathered evidence
-- write the standard STORM files: `direct_gen_outline`, `storm_gen_outline`, `storm_gen_article`, and `storm_gen_article_polished`
-- default to HTML artifacts when no output format is specified
 - write section-by-section with inline citations
+- produce the standard STORM artifact bundle
 - verify citation coverage, unsupported claims, source gaps, and stale-source risks
 
-The default mode is classic STORM. Co-STORM mode is available for interactive exploration, roundtable-style discussion, or mind-map driven research.
+The default mode is classic STORM. Co-STORM-style interactive exploration is documented but still in development.
 
 ## Install
 
@@ -41,12 +40,7 @@ Ask your agent to use the `storm` skill. In Codex, you can call it explicitly:
 $storm Research the current state of AI code review tools.
 ```
 
-By default this creates four HTML files under `.results/<topic-slug>/`:
-
-- `.results/<topic-slug>/direct_gen_outline.html`
-- `.results/<topic-slug>/storm_gen_outline.html`
-- `.results/<topic-slug>/storm_gen_article.html`
-- `.results/<topic-slug>/storm_gen_article_polished.html`
+By default this creates the standard HTML artifact bundle under `.results/<topic-slug>/`. See [Output Format](#output-format).
 
 To use another format, ask for it explicitly:
 
@@ -60,7 +54,7 @@ General agent prompt:
 Use the storm skill to write a source-grounded background review of open-source LLM evaluation frameworks.
 ```
 
-Co-STORM style exploration:
+Co-STORM style exploration (in development):
 
 ```text
 Use storm in Co-STORM mode to explore commercial paths for embodied AI. Start with a roundtable and maintain a mind-map style structure.
@@ -111,10 +105,10 @@ Classic STORM follows this sequence:
 3. Run simulated interviews for each perspective.
 4. Build an information table from gathered evidence.
 5. Draft and refine the outline.
-6. Write `direct_gen_outline.<format>`, `storm_gen_outline.<format>`, `storm_gen_article.<format>`, and `storm_gen_article_polished.<format>`.
+6. Write the standard artifact bundle.
 7. Polish, reorder citations, verify claims, and check artifact encoding.
 
-Co-STORM is only used when you explicitly ask for interactive exploration, roundtable discussion, user steering, or a mind map.
+Co-STORM is documented for future interactive exploration, roundtable discussion, user steering, and mind-map workflows, but the mode is still in development.
 
 ## Repository Structure
 
