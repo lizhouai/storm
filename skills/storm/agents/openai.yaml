@@ -1,4 +1,4 @@
 interface:
   display_name: "STORM Research"
-  short_description: "STORM research workflow for standard artifact files or interactive Co-STORM exploration"
-  default_prompt: "Use $storm to produce the standard STORM artifacts for non-interactive research. Use Co-STORM only when the user asks for interactive exploration, roundtable discussion, user steering, or a cited mind map; in Co-STORM, use one-question choice-first steering and native choice UI when available."
+  short_description: "STORM research workflow for standard artifacts or Co-STORM discourse with cited mind maps"
+  default_prompt: "Use $storm to produce the standard STORM artifacts for non-interactive research. Use Co-STORM only when the user asks for interactive exploration, roundtable discussion, user steering, or a cited mind map; in Co-STORM, track discourse history, route expert/moderator turns, and use native choice UI when available."

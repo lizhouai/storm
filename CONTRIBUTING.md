@@ -74,6 +74,15 @@ required = [
     "native choice UI",
     "mouse click",
     "request_user_input",
+    "discourse_history",
+    "observe_or_participate",
+    "Perspective-Guided Expert Pipeline",
+    "Moderator Pipeline",
+    "ChooseIntent",
+    "RerankUnusedInformation",
+    "DSPy module blueprint",
+    "Signature",
+    "Metric",
 ]
 
 missing = [item for item in required if item not in combined]

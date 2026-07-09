@@ -362,6 +362,15 @@ co_storm_board:
   topic: "{display topic}"
   scope: "{current boundaries and exclusions}"
   current_focus: "{active branch or question}"
+  observe_or_participate: observe|ask|steer|report
+  discourse_history:
+    - turn_id: T1
+      speaker: user|expert|specialist|moderator
+      utterance_summary: "{compact discourse move}"
+      citations: ["[1]"]
+  participant_list:
+    - role: "{active expert role}"
+      purpose: "{why this participant is useful now}"
   open_questions:
     - id: Q1
       question: "{unresolved question}"
@@ -388,6 +397,28 @@ co_storm_board:
 ```
 
 When the board is too large to show in full, keep the full board mentally in context and show only a compact delta plus the most relevant branch.
+
+### Discourse Roles And Turn Management
+
+Co-STORM has three active participant types:
+
+- `human user`: chooses whether to observe the discourse, ask a specific question, inject a steering utterance, or request the final report.
+- `Co-STORM LLM experts`: answer from external or corpus evidence and may raise follow-up questions grounded in the discourse history.
+- `moderator`: asks thought-provoking questions inspired by retrieved but unused information and updates the participant list when a new specialist would improve the discourse.
+
+Track both surfaces at once:
+
+- `Mind map`: the shared conceptual space, organized as a hierarchy of cited claims, uncertain points, and open questions.
+- `Collaborative discourse`: the turn-by-turn conversation among user, experts, specialists, and moderator.
+
+The turn manager must run a `ChooseIntent` step before every system turn. Choose exactly one intent:
+
+| Intent | Use when | Next pipeline |
+|---|---|---|
+| `question_answering` | The user asks or selects a concrete question | Perspective-Guided Expert Pipeline |
+| `question_asking` | The user observes or wants the system to continue exploring | Perspective-Guided Expert Pipeline |
+| `moderator_broadening` | The discussion repeats, narrows, or unused evidence is promising | Moderator Pipeline |
+| `final_report` | The user asks to summarize, conclude, or write | Final Report |
 
 ### Choice-First Steering
 
@@ -432,13 +463,13 @@ Good Co-STORM steering questions decide the next research move, such as deepen t
 For each Co-STORM turn:
 
 1. Interpret the user's latest steering utterance and update `current_focus`.
-2. Select exactly one role for the response:
+2. Run `ChooseIntent` using `discourse_history`, `mind_map`, `unused_evidence_queue`, and `observe_or_participate`.
+3. Select exactly one role for the response:
    - `general expert` for broad synthesis across the mind map.
    - `specialist` for a specific technical, historical, market, policy, or methodological branch.
    - `moderator` for broadening, reconnecting branches, or surfacing unused evidence.
-3. Retrieve or inspect more evidence only when the current board is insufficient.
-4. Answer from cited evidence, explicitly marking uncertain or unsupported points.
-5. Insert new evidence into the mind map under the node matching the question or query intent.
+4. Route through the matching pipeline below.
+5. Update `discourse_history`, `participant_list`, `mind_map`, `sources`, and `unused_evidence_queue`.
 6. Return a compact response with:
    - `Answer`
    - `Mind-map update`
@@ -446,6 +477,39 @@ For each Co-STORM turn:
    - `Choice-first steering prompt`
 
 Do not ask the user to confirm obvious next exploration steps. Offer concrete next directions and continue when the user picks one or asks a follow-up.
+
+### Perspective-Guided Expert Pipeline
+
+Use this pipeline for expert or specialist turns. It should support both question answering and question asking.
+
+```text
+Discourse history
+  -> ChooseIntent
+  -> question_answering:
+       GenerateQueriesAndRetrieve
+       GenerateCitedResponse
+       PolishUtterance
+       UpdateMindMap
+  -> question_asking:
+       GenerateQuestion
+       PolishUtterance
+       UpdateMindMap
+```
+
+Question-answering rules:
+
+- Generate retrieval queries from the active question and the relevant mind-map branch.
+- Filter blank or duplicate queries before retrieval.
+- Use only retrieved or already-boarded evidence for factual claims.
+- Generate a cited response, then polish for clarity without adding unsupported claims.
+- Insert the response into the smallest relevant mind-map node.
+
+Question-asking rules:
+
+- Generate a question from discourse history, current focus, and the active participant role.
+- Prefer questions that open a useful branch, resolve uncertainty, or compare two claims.
+- Cite the evidence or mind-map node that motivated the question when possible.
+- Use choice-first steering to let the user accept, redirect, or ask for an answer instead.
 
 ### Moderator Behavior
 
@@ -458,6 +522,26 @@ The moderator should:
 - Ask one grounded question that naturally follows from the current mind map.
 - Cite the information that inspired the question.
 - Suggest whether to deepen, broaden, compare, or summarize next.
+
+### Moderator Pipeline
+
+Use this pipeline when the system needs to broaden the discourse, reduce repetition, or introduce overlooked evidence.
+
+```text
+Discourse history + unused_evidence_queue
+  -> RerankUnusedInformation
+  -> GenerateQuestion
+  -> PolishUtterance
+  -> UpdateParticipantList
+  -> UpdateMindMap
+```
+
+Moderator rules:
+
+- Rerank unused information by relevance, novelty, evidence quality, and distance from the last turn.
+- Ask one grounded, thought-provoking question rather than answering immediately.
+- Add or rotate specialists when the new question needs a different perspective.
+- Keep the moderator visibly separate from expert roles so the user can tell when the system is broadening the discussion.
 
 ### Mind-Map Maintenance
 
@@ -478,6 +562,34 @@ Rules:
 - Preserve local document ids and page or section names when using a provided corpus.
 - Expand overloaded nodes before adding more citations to them.
 - Merge empty or single-child nodes only when the merge does not hide an important distinction.
+
+The mind map is the shared conceptual space between the human user and the system. It should reduce long-discourse mental load by making the current structure, evidence, unresolved questions, and branch history visible.
+
+### DSPy Module Blueprint
+
+If implementing a local Co-STORM runner with DSPy, model the discourse protocol as a modular DSPy program. This is an implementation blueprint, not a dependency requirement for the skill text.
+
+Use DSPy concepts this way:
+
+- `Signature`: declare typed inputs and outputs for each step, such as `discourse_history, mind_map, user_utterance -> intent`.
+- `Module`: implement reusable steps such as `ChooseIntent`, `GenerateQueriesAndRetrieve`, `GenerateCitedResponse`, `GenerateQuestion`, `PolishUtterance`, `UpdateMindMap`, `RerankUnusedInformation`, `UpdateParticipantList`, and `GenerateCitedReport`.
+- `Metric`: score citation support, answer groundedness, mind-map coverage, unused-evidence novelty, and user-steering usefulness.
+- `Optimizer`: improve prompts, demonstrations, or module behavior only after metrics and representative examples exist.
+
+Minimal module map:
+
+| Module | Input | Output |
+|---|---|---|
+| `ChooseIntent` | user utterance, discourse history, mind map, unused evidence | one of `question_answering`, `question_asking`, `moderator_broadening`, `final_report` |
+| `GenerateQueriesAndRetrieve` | current focus, question, mind-map branch | non-empty queries and evidence snippets |
+| `GenerateCitedResponse` | question and evidence snippets | grounded answer with citation ids |
+| `GenerateQuestion` | discourse history, participant role, mind-map branch | grounded follow-up question |
+| `RerankUnusedInformation` | unused evidence queue and discourse history | ranked evidence candidates for moderator use |
+| `UpdateMindMap` | utterance, evidence, current mind map | mind-map delta |
+| `UpdateParticipantList` | current focus and new question | active expert roles |
+| `GenerateCitedReport` | final mind map and sources | final report with references and verification notes |
+
+Do not mention DSPy as required for ordinary skill use. Mention it only when the user asks about implementation architecture, local runners, or modularizing Co-STORM.
 
 ### Final Report
 

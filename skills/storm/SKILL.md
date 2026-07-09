@@ -101,6 +101,9 @@ Co-STORM is conversation-first. Do not create the four standard STORM artifacts 
 
 - `topic` and `scope`
 - `current_focus`
+- `observe_or_participate`: whether the user is currently observing, asking, or actively steering
+- `discourse_history`: compact turn log of user, expert, specialist, and moderator utterances
+- `participant_list`: active expert roles and why each role is useful now
 - `open_questions`
 - `mind_map`: hierarchical nodes with claims, uncertainty, and citation ids
 - `sources`: numbered references in first-use order
@@ -114,10 +117,11 @@ Use choice-first steering for user interaction. Ask one question at a time, pref
 For each interaction turn:
 
 1. Incorporate the user's steering into `current_focus`.
-2. Choose one role: general expert, rotating specialist, or moderator.
-3. Use the moderator after two answer-only turns, repeated ground, or an overly narrow branch.
-4. Retrieve more evidence when needed, answer with citations, and update the board.
-5. Show the user a compact update: answer, mind-map delta, open questions, and one choice-first steering prompt for suggested next directions.
+2. Run a `ChooseIntent` step: question answering, question asking, moderator broadening, or final report.
+3. Choose one role: general expert, rotating specialist, or moderator.
+4. Use the Perspective-Guided Expert Pipeline for expert turns: generate a question or retrieve evidence, generate a cited response, polish the utterance, and update the mind map.
+5. Use the Moderator Pipeline after two answer-only turns, repeated ground, narrow focus, or when unused evidence should be surfaced.
+6. Show the user a compact update: answer, mind-map delta, open questions, and one choice-first steering prompt for suggested next directions.
 
 Mind-map maintenance:
 
@@ -125,6 +129,8 @@ Mind-map maintenance:
 - Split overloaded nodes, merge duplicate nodes, and prune empty nodes.
 - Mark uncertain or disputed claims instead of flattening them into facts.
 - Keep citations attached to the smallest claim they support.
+
+For DSPy-based local implementations, treat Co-STORM as a modular program blueprint: use Signatures for each step's typed inputs and outputs, Modules for `ChooseIntent`, expert response generation, moderator question generation, mind-map updates, and report generation, and Metrics to evaluate citation support, mind-map coverage, and turn usefulness before using DSPy optimizers.
 
 When the user asks to conclude, summarize, or write the report, generate a final cited report from the mind map with references and verification notes. If the user explicitly asks for files, write `co_storm_mind_map.<format>` and `co_storm_report.<format>` under the requested output directory, or under `.results/<topic-slug>/` if no path is specified. If no format is specified for those files, use `html`.
 
