@@ -1,6 +1,6 @@
 ---
 name: storm
-version: 0.2.0
+version: 0.2.1
 description: Use when Codex needs STORM-style deep research, technical or literature surveys, background reviews, cited reports, multi-perspective source-grounded synthesis, standard STORM artifact files, or interactive Co-STORM exploration. Use this whenever the user asks to research, 调研, survey, compare sources, build a cited article, run a local STORM pipeline, or produce source-backed research outputs, even if they do not explicitly say "STORM". By default, non-interactive research must produce the standard four STORM files: direct_gen_outline, storm_gen_outline, storm_gen_article, and storm_gen_article_polished.
 ---
 

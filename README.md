@@ -51,7 +51,7 @@ By default this creates four HTML files under `.results/<topic-slug>/`:
 To use another format, ask for it explicitly:
 
 ```text
-$storm 调研一下 RAG 技术，输出 markdown 格式
+$storm Research RAG technology and output markdown format
 ```
 
 General agent prompt:
