@@ -1,0 +1,4 @@
+interface:
+  display_name: "STORM Research"
+  short_description: "STORM-style deep research workflow"
+  default_prompt: "Use $storm to produce a concise source-grounded research report with perspectives, citations, and verification notes."
