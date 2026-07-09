@@ -1,12 +1,14 @@
 # STORM Research Skill
 
+Current version: `v0.2.0`
+
 An Agent Skill for STORM-style deep research: perspective-guided interviews, source-grounded synthesis, structured outlines, inline citations, and verification notes.
 
 This skill packages the Stanford STORM research pattern as a reusable workflow for coding agents that support `SKILL.md`-based Agent Skills. It is based on the original [stanford-oval/storm](https://github.com/stanford-oval/storm) project.
 
 ## What It Does
 
-Use `storm` when you want an agent to produce a careful research brief instead of a shallow summary.
+Use `storm` when you want an agent to produce standard STORM research artifacts instead of a shallow summary.
 
 It helps the agent:
 
@@ -15,6 +17,8 @@ It helps the agent:
 - run search-backed simulated interviews from each perspective
 - collect evidence into an information table
 - refine an outline from the gathered evidence
+- write the standard STORM files: `direct_gen_outline`, `storm_gen_outline`, `storm_gen_article`, and `storm_gen_article_polished`
+- default to HTML artifacts when no output format is specified
 - write section-by-section with inline citations
 - verify citation coverage, unsupported claims, source gaps, and stale-source risks
 
@@ -33,7 +37,20 @@ npx skills add lizhouai/storm
 Ask your agent to use the `storm` skill. In Codex, you can call it explicitly:
 
 ```text
-$storm Research the current state of AI code review tools. Write a concise Chinese report with perspectives, citations, and verification notes.
+$storm Research the current state of AI code review tools.
+```
+
+By default this creates four HTML files under `.results/<topic-slug>/`:
+
+- `.results/<topic-slug>/direct_gen_outline.html`
+- `.results/<topic-slug>/storm_gen_outline.html`
+- `.results/<topic-slug>/storm_gen_article.html`
+- `.results/<topic-slug>/storm_gen_article_polished.html`
+
+To use another format, ask for it explicitly:
+
+```text
+$storm 调研一下 RAG 技术，输出 markdown 格式
 ```
 
 General agent prompt:
@@ -56,15 +73,14 @@ Use storm to synthesize the documents in this repository. Restrict retrieval to 
 
 ## Output Format
 
-Unless you request another format, the skill guides the agent toward this structure:
+Unless you request another format, the skill produces a standard STORM artifact bundle in HTML under `.results/<topic-slug>/`:
 
-- Research brief: scope, assumptions, and source boundaries
-- Perspectives: writer personas used during research
-- Question/query log: compact table of interview questions, queries, and source counts
-- Refined outline: final heading structure
-- Cited report: source-grounded synthesis with inline citations
-- References: numbered source list matching first citation order
-- Verification notes: unsupported claims removed, gaps, stale-source risks, and unresolved questions
+- `direct_gen_outline.html`: topic-only outline before evidence refinement
+- `storm_gen_outline.html`: evidence-refined outline
+- `storm_gen_article.html`: cited draft article
+- `storm_gen_article_polished.html`: polished final article with references and verification notes
+
+If you explicitly ask for chat-only or no files, the skill can instead return a compact in-chat brief with perspectives, query log, citations, references, and verification notes.
 
 ## When To Use It
 
@@ -94,8 +110,8 @@ Classic STORM follows this sequence:
 3. Run simulated interviews for each perspective.
 4. Build an information table from gathered evidence.
 5. Draft and refine the outline.
-6. Write sections from section-relevant evidence.
-7. Polish, reorder citations, and verify claims.
+6. Write `direct_gen_outline.<format>`, `storm_gen_outline.<format>`, `storm_gen_article.<format>`, and `storm_gen_article_polished.<format>`.
+7. Polish, reorder citations, verify claims, and check artifact encoding.
 
 Co-STORM is only used when you explicitly ask for interactive exploration, roundtable discussion, user steering, or a mind map.
 
