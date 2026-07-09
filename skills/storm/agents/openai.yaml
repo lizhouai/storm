@@ -1,4 +1,4 @@
 interface:
   display_name: "STORM Research"
-  short_description: "STORM-style deep research workflow"
-  default_prompt: "Use $storm to produce a concise source-grounded research report with perspectives, citations, and verification notes."
+  short_description: "STORM-style research workflow that creates standard artifact files"
+  default_prompt: "Use $storm to produce the standard STORM artifacts for this topic: direct_gen_outline, storm_gen_outline, storm_gen_article, and storm_gen_article_polished. If no format is specified, write them as HTML files."

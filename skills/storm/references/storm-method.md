@@ -3,12 +3,17 @@
 ## Contents
 
 - Classic STORM algorithm
+- Depth and deliverable defaults
+- Standard artifact files
+- Source selection ladder
 - Perspective generation
 - Simulated interview loop
 - Information table schema
 - Outline generation
 - Section writing
 - Citation verification
+- Local runner mode
+- Quality comparison heuristics
 - Co-STORM optional mode
 
 ## Classic STORM Algorithm
@@ -32,6 +37,79 @@ Core sequence:
 5. Refine the outline from the interview evidence.
 6. Write each first-level section from section-relevant evidence.
 7. Add lead/summary, remove duplicates if needed, and verify citations.
+
+## Depth and Deliverable Defaults
+
+Choose the smallest deliverable that still preserves source-grounded reasoning.
+
+| Request shape | Default depth | Notes |
+|---|---|---|
+| "调研一下", "research this", "survey the space" | Standard artifact bundle | Four files, default `.html`, concise-to-standard article depth |
+| "technical review", "literature review", "决策建议" | Standard artifact bundle | Four files, default `.html`, more evaluation and tradeoffs |
+| "Wikipedia-style", "完整长文", "generate article" | Full article | Full outline, section-by-section writing, artifact paths if saved |
+| "run this STORM script/repo" | Local runner | Execute requested tool, then summarize and verify generated artifacts |
+| "quick answer", "chat only", "no files" | Chat brief | In-chat report only |
+
+For Chinese prompts, keep the final report in Chinese by default. Preserve standard English terms in parentheses when they help precision.
+
+The standard artifact bundle is the default for non-interactive research. A concise article is not a failed STORM run, but it still needs the same four files so downstream tools can rely on stable artifact names.
+
+Default output location:
+
+1. If the user specifies an output path, write the artifacts there.
+2. If the user does not specify an output path, create `.results/<topic-slug>/` and write all standard artifacts there.
+3. Keep `display_topic` separate from `<topic-slug>`. The display topic is used for research and headings; the slug is only for the filesystem path.
+
+## Standard Artifact Files
+
+Create these four files for every non-interactive STORM research task unless the user explicitly asks for chat-only output:
+
+| File | Stage | Required content |
+|---|---|---|
+| `direct_gen_outline.<format>` | Direct outline | Topic-only outline before evidence refinement |
+| `storm_gen_outline.<format>` | Refined outline | Evidence-refined outline based on interview findings |
+| `storm_gen_article.<format>` | Draft article | Section-by-section cited article generated from gathered evidence |
+| `storm_gen_article_polished.<format>` | Polished article | Final article with lead/summary, cleaned structure, references, and verification notes |
+
+Format rules:
+
+1. If the user does not specify a format, use `html`.
+2. If the user specifies `txt`, `md`, `markdown`, `pdf`, or another feasible format, keep the four base filenames and change only the extension.
+3. HTML artifacts must be standalone UTF-8 files with `<meta charset="utf-8">`, a meaningful `<title>`, readable semantic headings, and citation links or citation text that works offline.
+4. Do not replace the four files with a single combined report. A short run summary in chat is fine, but the files are the deliverable.
+5. The default full paths are `.results/<topic-slug>/direct_gen_outline.html`, `.results/<topic-slug>/storm_gen_outline.html`, `.results/<topic-slug>/storm_gen_article.html`, and `.results/<topic-slug>/storm_gen_article_polished.html`.
+
+Suggested HTML structure:
+
+```html
+<!doctype html>
+<html lang="{language}">
+<head>
+  <meta charset="utf-8">
+  <title>{topic} - {artifact_name}</title>
+</head>
+<body>
+  <main>
+    {artifact_content}
+  </main>
+</body>
+</html>
+```
+
+For `storm_gen_article_polished.<format>`, include sections for references and verification notes at the end. For the outline files, include only outline content plus minimal metadata such as topic and generation stage.
+
+## Source Selection Ladder
+
+Use sources according to claim type:
+
+| Claim type | Preferred sources |
+|---|---|
+| Definitions, algorithms, benchmark claims | Original papers, peer-reviewed venues, arXiv papers when clearly identified |
+| Current standards, safety risks, governance | Official standards bodies, OWASP/NIST/vendor security docs, recent surveys |
+| Product capabilities | Official product documentation or release notes |
+| Ecosystem trends | High-quality surveys first; reputable technical blogs only as secondary color |
+
+Avoid letting a search engine's top results define the outline. Use retrieved evidence to refine a topic-driven outline, not replace it with a source-result collage.
 
 ## Perspective Generation
 
@@ -106,6 +184,8 @@ If the information is insufficient, say what cannot be answered.
 
 Stop a perspective interview after the writer thanks the expert, repeats questions, produces an empty question, or reaches the turn limit.
 
+If a generated search query is empty or only punctuation, discard it. If all queries for a turn are empty, ask the writer to reformulate once; if it remains empty, stop that perspective and record the gap.
+
 ## Information Table Schema
 
 Keep the research log in this shape:
@@ -162,6 +242,7 @@ Outline checks:
 - No `Conclusion`, `References`, or source-list heading in the outline.
 - Sections are distinct enough to retrieve evidence separately.
 - Contested or uncertain areas appear as attributed sections when important.
+- The number of headings fits the deliverable depth. A concise artifact bundle should not receive an oversized encyclopedia outline.
 
 ## Section Writing
 
@@ -208,6 +289,48 @@ Citation audit table:
 | Citation | Claim | Source | Supports claim? | Action |
 |---|---|---|---|---|
 | `[1]` | ... | ... | yes/no/partial | keep/rewrite/remove |
+
+## Local Runner Mode
+
+Use this section when the user explicitly asks to run a local STORM implementation, script, virtual environment, or existing pipeline.
+
+Execution principles:
+
+1. Inspect the runner's CLI before running it. Confirm how the topic is supplied.
+2. Preserve two topic values:
+   - `display_topic`: the exact user topic used for research and prompts.
+   - `artifact_slug`: a filesystem-safe slug used only for directories and filenames.
+3. If no output path is specified, set or move final artifacts to `.results/<artifact_slug>/`.
+4. For non-English topics, do not pass a sanitized ASCII slug as the research topic. If the runner conflates topic and directory name, wrap it process-locally or patch only when the user asks for a persistent fix.
+5. Start with the requested parameters. If the run fails due to connection reset or rate limits, reduce concurrency and retry once.
+6. Filter empty generated retriever queries before sending them to APIs when a process-local wrapper can safely do so.
+7. After a successful run, map or convert the runner outputs into the standard four artifact files. If no format was specified, convert the four standard outputs to HTML.
+8. List output files, run parameters, timing/token usage if available, and any warnings that may affect trust.
+
+Windows and encoding hygiene:
+
+1. Set Python stdout to UTF-8 when printing Chinese or other non-ASCII text.
+2. HTML artifacts must include `<meta charset="utf-8">`.
+3. Read each generated `.html`, `.txt`, and `.md` artifact back with strict UTF-8.
+4. Scan for mojibake markers: `�`, `瀹`, `涓`, `鐨`, `妫`, `鎶`, `锛`, repeated `????`, or repeated `����`.
+5. If files were written in GBK/GB18030, convert only affected text artifacts to UTF-8, then verify by reading them back.
+6. Do not trust `Get-Content` or terminal preview alone; terminal decoding can make good files look bad or bad files look good.
+
+When reporting local runner results, include whether the source tree was modified. Prefer no source edits for one-off execution.
+
+## Quality Comparison Heuristics
+
+When comparing a manual STORM brief with a full local STORM article, judge them by the intended deliverable:
+
+| Dimension | Brief should optimize | Full article should optimize |
+|---|---|---|
+| Synthesis | Clear takeaways and decisions | Breadth and section coverage |
+| Traceability | Compact query/source log | Complete intermediate artifacts |
+| Citations | High-quality, first-appearance references | Dense coverage across sections |
+| Readability | Low duplication and strong prioritization | Navigable outline and complete prose |
+| Risk disclosure | Explicit gaps and stale-source notes | Run logs, raw retrieval, and artifact verification |
+
+A longer article is not automatically better. Default STORM should still create the four standard files; adjust article length inside those files according to the user's request.
 
 ## Co-STORM Optional Mode
 
