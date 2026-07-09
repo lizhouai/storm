@@ -2,7 +2,7 @@
 
 An Agent Skill for STORM-style deep research: perspective-guided interviews, source-grounded synthesis, structured outlines, inline citations, and verification notes.
 
-This skill packages the Stanford STORM research pattern as a reusable workflow for coding agents that support `SKILL.md`-based Agent Skills.
+This skill packages the Stanford STORM research pattern as a reusable workflow for coding agents that support `SKILL.md`-based Agent Skills. It is based on the original [stanford-oval/storm](https://github.com/stanford-oval/storm) project.
 
 ## What It Does
 
@@ -22,34 +22,10 @@ The default mode is classic STORM. Co-STORM mode is available for interactive ex
 
 ## Install
 
-Install globally for your current agent:
-
-```bash
-npx skills add lizhouai/storm -g
-```
-
-Install globally for all supported agents detected on your machine:
-
-```bash
-npx skills add lizhouai/storm -g --all
-```
-
-Preview the skill before installing:
-
-```bash
-npx skills add lizhouai/storm --list
-```
-
-Install into the current project instead of globally:
+Install with:
 
 ```bash
 npx skills add lizhouai/storm
-```
-
-If symlinks are inconvenient on your system, copy the files instead:
-
-```bash
-npx skills add lizhouai/storm -g --all --copy
 ```
 
 ## Usage
@@ -141,7 +117,7 @@ storm/
 
 ## Compatibility
 
-This repository uses the Agent Skills `SKILL.md` format. It is intended to work with agents and tools that can install or read Agent Skills, including Codex-compatible skill directories and the `npx skills` CLI.
+This repository uses the Agent Skills `SKILL.md` format. It is intended to work with any agent or tool that can install or read skills in this format, including environments managed through the `npx skills` CLI.
 
 Different agents expose skills differently. If explicit invocation syntax is unavailable, ask the agent in natural language to "use the storm skill".
 
@@ -182,4 +158,6 @@ npx skills add . -g --copy
 
 ## License
 
-No license file is included yet. Add a license before relying on this repository for public redistribution or downstream reuse.
+MIT License. See [LICENSE](LICENSE).
+
+The original [stanford-oval/storm](https://github.com/stanford-oval/storm) project is also released under the MIT License.
