@@ -1,0 +1,102 @@
+name: Validate
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validation and pinned CLI smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate skill contract
+        run: python scripts/validate_skill.py
+
+      - name: Run validator regression tests
+        run: python -m unittest discover -s tests -p "test_*.py"
+
+      - name: Discover skill with pinned CLI
+        shell: bash
+        run: |
+          set -o pipefail
+          npx -y skills@1.5.15 add . --list | tee /tmp/skills-list.txt
+          grep -F "Found 1 skill" /tmp/skills-list.txt
+          grep -E "(^|[[:space:]])storm([[:space:]]|$)" /tmp/skills-list.txt
+
+      - name: Render skill prompt with pinned CLI
+        shell: bash
+        run: |
+          set -o pipefail
+          npx -y skills@1.5.15 use . --skill storm | tee /tmp/storm-prompt.txt
+          grep -F "<SKILL.md>" /tmp/storm-prompt.txt
+          grep -F "name: storm" /tmp/storm-prompt.txt
+          grep -F "references/storm-method.md" /tmp/storm-prompt.txt
+          support_dir="$(awk '/Supporting files for this skill were downloaded to:/{getline; print; exit}' /tmp/storm-prompt.txt)"
+          test -n "$support_dir"
+          test -f "$support_dir/SKILL.md"
+          test -f "$support_dir/agents/openai.yaml"
+          test -f "$support_dir/references/storm-method.md"
+
+      - name: Monitor the public owner/repo install path
+        shell: bash
+        run: |
+          set -o pipefail
+          npx -y skills@latest add "$GITHUB_REPOSITORY" --list | tee /tmp/skills-public-list.txt
+          grep -F "Found 1 skill" /tmp/skills-public-list.txt
+          grep -E "(^|[[:space:]])storm([[:space:]]|$)" /tmp/skills-public-list.txt
+
+      - name: Check whitespace errors
+        shell: bash
+        run: |
+          empty_tree="$(git hash-object -t tree /dev/null)"
+          git diff --check "$empty_tree" HEAD
+
+  latest-canary:
+    name: Latest skills CLI canary
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Discover and render with latest CLI
+        shell: bash
+        run: |
+          set -o pipefail
+          npx -y skills@latest add . --list | tee /tmp/skills-latest-list.txt
+          grep -F "Found 1 skill" /tmp/skills-latest-list.txt
+          grep -E "(^|[[:space:]])storm([[:space:]]|$)" /tmp/skills-latest-list.txt
+          npx -y skills@latest use . --skill storm | tee /tmp/storm-latest-prompt.txt
+          grep -F "<SKILL.md>" /tmp/storm-latest-prompt.txt
+          grep -F "name: storm" /tmp/storm-latest-prompt.txt
+          support_dir="$(awk '/Supporting files for this skill were downloaded to:/{getline; print; exit}' /tmp/storm-latest-prompt.txt)"
+          test -n "$support_dir"
+          test -f "$support_dir/SKILL.md"
+          test -f "$support_dir/agents/openai.yaml"
+          test -f "$support_dir/references/storm-method.md"

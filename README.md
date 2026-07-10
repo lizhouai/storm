@@ -22,15 +22,17 @@ It helps the agent:
 - produce the standard STORM artifact bundle
 - verify citation coverage, unsupported claims, source gaps, and stale-source risks
 
-The default mode is classic STORM. Co-STORM mode is available for interactive exploration, roundtable discussion, user steering, and mind-map driven research.
+The default mode is classic STORM. A prompt-native Co-STORM preview is available for interactive exploration, roundtable discussion, user steering, and mind-map driven research. It is an agent workflow, not a bundled `knowledge-storm` runner.
 
 ## Install
 
 Install with:
 
 ```bash
-npx skills add lizhouai/storm --full-depth
+npx skills add lizhouai/storm
 ```
+
+This installs the skill for the current project. Add `-g` only when you intentionally want a global installation, and use the same scope when updating.
 
 ## Usage
 
@@ -54,13 +56,13 @@ General agent prompt:
 Use the storm skill to write a source-grounded background review of open-source LLM evaluation frameworks.
 ```
 
-Co-STORM style exploration:
+Prompt-native Co-STORM preview:
 
 ```text
-Use storm in Co-STORM mode to explore commercial paths for embodied AI. Start with a roundtable and maintain a mind-map style structure.
+Use the prompt-native Co-STORM preview to explore commercial paths for embodied AI. Start with a roundtable and maintain a mind-map style structure.
 ```
 
-In Co-STORM mode, the agent keeps a conversation-local Co-STORM board with a cited mind map, discourse history, participants, open questions, sources, unused evidence, and current focus. It uses choice-first steering: one question at a time, two or three meaningful options, and the native choice UI when available so you can keep steering with a mouse click. The turn manager chooses whether the next move is expert answering, expert question asking, moderator broadening, or final report generation. When you ask to conclude or write the report, it generates a final cited report from that board.
+In the Co-STORM preview, the agent keeps a conversation-local board with a cited mind map, discourse history, participants, open questions, sources, unused evidence, and current focus. It uses choice-first steering and routes each turn to an expert, specialist, moderator, or final-report step. Compact checkpoints make the board recoverable when the host preserves conversation state; if state or citation mappings are lost, the agent must disclose the gap and rebuild them before continuing.
 
 Local-document constrained research:
 
@@ -79,7 +81,7 @@ Unless you request another format, the skill produces a standard STORM artifact 
 
 If you explicitly ask for chat-only or no files, the skill can instead return a compact in-chat brief with perspectives, query log, citations, references, and verification notes.
 
-Co-STORM is conversation-first and does not create the four standard STORM files unless you explicitly ask for file output. If you do request files, it writes:
+The Co-STORM preview is conversation-first and does not create the four standard STORM files unless you explicitly ask for file output. If you do request files, it writes:
 
 - `co_storm_mind_map.<format>`: the cited mind map and open questions
 - `co_storm_report.<format>`: the final report synthesized from the mind map
@@ -115,7 +117,7 @@ Classic STORM follows this sequence:
 6. Write the standard artifact bundle.
 7. Polish, reorder citations, verify claims, and check artifact encoding.
 
-Co-STORM is used when you explicitly ask for interactive exploration, roundtable discussion, user steering, or a mind map. It starts with a mini STORM warm start, maintains a cited mind map during the conversation, tracks discourse history, asks click-style steering questions one at a time, and writes the final report when you ask to conclude. For local runner implementations, the method reference includes a DSPy module blueprint based on Signatures, Modules, Metrics, and optional Optimizers.
+The prompt-native Co-STORM preview is used only when you explicitly ask for interactive exploration, roundtable discussion, user steering, or a mind map. It starts with a mini STORM warm start, maintains a cited mind map and checkpoint during the conversation, and writes the final report when you ask to conclude. The method reference includes a DSPy implementation blueprint, but this repository does not bundle DSPy modules or an executable Co-STORM runner.
 
 ## Repository Structure
 
@@ -123,6 +125,11 @@ Co-STORM is used when you explicitly ask for interactive exploration, roundtable
 storm/
   README.md
   LICENSE
+  CONTRIBUTING.md
+  evals/
+    cases.json
+  scripts/
+    validate_skill.py
   skills/
     storm/
       SKILL.md
@@ -135,26 +142,28 @@ storm/
 - `skills/storm/SKILL.md` is the skill entry point and activation contract.
 - `skills/storm/references/storm-method.md` contains the detailed algorithm, prompts, schemas, and quality checks.
 - `skills/storm/agents/openai.yaml` provides display metadata for OpenAI-style agent surfaces.
-- The repository root intentionally does not contain `SKILL.md`; use `--full-depth` so the skills CLI discovers the full `skills/storm/` bundle.
+- `evals/cases.json` defines manual forward-eval fixtures for critical modes and safety boundaries.
+- `scripts/validate_skill.py` enforces the repository contract without third-party Python dependencies.
+- The repository root intentionally does not contain `SKILL.md`; the standard `skills/storm/` layout lets the skills CLI install the whole bundle.
 
 ## Compatibility
 
-This repository uses the Agent Skills `SKILL.md` format. It is intended to work with any agent or tool that can install or read skills in this format, including environments managed through the `npx skills` CLI.
+This repository uses the Agent Skills `SKILL.md` format. Local discovery and bundle installation are validated with the `npx skills` CLI. Other compatible agents can read the same skill, but tool availability, native choice UI, and automatic triggering vary by host.
 
 Different agents expose skills differently. If explicit invocation syntax is unavailable, ask the agent in natural language to "use the storm skill".
 
 ## Updating
 
-Update an installed copy with:
+Update a project-local installation with:
+
+```bash
+npx skills update storm
+```
+
+For a global installation, use the matching global scope:
 
 ```bash
 npx skills update storm -g
-```
-
-Or reinstall from the repository:
-
-```bash
-npx skills add lizhouai/storm -g --copy --full-depth
 ```
 
 ## Development
@@ -166,20 +175,21 @@ git clone https://github.com/lizhouai/storm.git
 cd storm
 ```
 
-Validate local discovery:
+Run the repository checks and validate local discovery:
 
 ```bash
-npx skills add . --list --full-depth
+python scripts/validate_skill.py
+npx skills add . --list
 ```
 
 Install your local working copy while developing:
 
 ```bash
-npx skills add . -g --copy --full-depth
+npx skills add . -g --copy
 ```
 
 ## License
 
 MIT License. See [LICENSE](LICENSE).
 
-The original [stanford-oval/storm](https://github.com/stanford-oval/storm) project is also released under the MIT License.
+The original [stanford-oval/storm](https://github.com/stanford-oval/storm) project is also released under the MIT License. See the original [STORM paper](https://aclanthology.org/2024.naacl-long.347/) and [Co-STORM paper](https://aclanthology.org/2024.emnlp-main.554/) for the research systems this prompt-native skill adapts.

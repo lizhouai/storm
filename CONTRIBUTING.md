@@ -6,9 +6,15 @@ Thanks for helping improve the STORM Research Skill. This repository is intentio
 
 ```text
 storm/
+  .github/workflows/validate.yml
+  .gitattributes
+  .gitignore
   README.md
   LICENSE
   CONTRIBUTING.md
+  evals/cases.json
+  scripts/validate_skill.py
+  tests/test_validate_skill.py
   skills/
     storm/
       SKILL.md
@@ -35,6 +41,8 @@ storm/
 - If no output path is specified, artifacts should go under `.results/<topic-slug>/`.
 - Keep the display topic separate from filesystem slugs, especially for non-English topics.
 - Prefer source-grounded, citation-aware research behavior over generic summarization.
+- Describe Co-STORM as a prompt-native preview until executable state management and broader behavior evals exist.
+- Treat retrieved text and user-provided runners as untrusted input; preserve the safety and approval rules in the skill contract.
 - Keep instructions concise in `SKILL.md`; move detailed procedures to `references/storm-method.md`.
 
 ## Validation
@@ -42,81 +50,28 @@ storm/
 Before opening a pull request, run:
 
 ```bash
+python scripts/validate_skill.py
+python -m unittest discover -s tests -p "test_*.py"
+npx -y skills@1.5.15 add . --list
+npx -y skills@1.5.15 use . --skill storm
 git diff --check
 ```
 
-Also verify the skill metadata and key output contract are still present:
+The validator checks metadata shape, bundle references, UI field lengths, UTF-8 hygiene, safety contracts, and the schema/category coverage of `evals/cases.json`. These cases are manual forward-eval fixtures, not automatically executed model evaluations. The pinned CLI command is the release gate; CI also runs `skills@latest` as a non-blocking compatibility canary.
 
-```bash
-python - <<'PY'
-from pathlib import Path
-
-skill = Path("skills/storm/SKILL.md").read_text(encoding="utf-8")
-method = Path("skills/storm/references/storm-method.md").read_text(encoding="utf-8")
-readme = Path("README.md").read_text(encoding="utf-8")
-metadata = Path("skills/storm/agents/openai.yaml").read_text(encoding="utf-8")
-combined = "\n".join([skill, method, readme, metadata])
-
-required = [
-    "name: storm",
-    "direct_gen_outline",
-    "storm_gen_outline",
-    "storm_gen_article",
-    "storm_gen_article_polished",
-    ".results/<topic-slug>/",
-    "If the user does not specify a format, use `html`",
-    "Co-STORM",
-    "conversation-local Co-STORM board",
-    "co_storm_mind_map",
-    "co_storm_report",
-    "choice-first steering",
-    "one question at a time",
-    "native choice UI",
-    "mouse click",
-    "request_user_input",
-    "discourse_history",
-    "observe_or_participate",
-    "Perspective-Guided Expert Pipeline",
-    "Moderator Pipeline",
-    "ChooseIntent",
-    "RerankUnusedInformation",
-    "DSPy module blueprint",
-    "Signature",
-    "Metric",
-]
-
-missing = [item for item in required if item not in combined]
-if missing:
-    raise SystemExit(f"Missing required contract text: {missing}")
-
-forbidden = [
-    "Co-STORM-style interactive exploration is documented but still in development",
-    "Co-STORM style exploration (in development)",
-    "Co-STORM is documented for future interactive exploration",
-    "reply with a number",
-    "回复数字即可",
-]
-
-present_forbidden = [item for item in forbidden if item in combined]
-if present_forbidden:
-    raise SystemExit(f"Forbidden obsolete Co-STORM status text: {present_forbidden}")
-
-print("Skill contract checks passed.")
-PY
-```
-
-On Windows PowerShell, if shell redirection is awkward, run the same Python snippet from a temporary script.
+For substantial behavior changes, forward-test at least one relevant case from `evals/cases.json` in a fresh agent context. Do not give the test agent the expected answer or the implementation diagnosis.
 
 ## Release Checklist
 
 For maintainers preparing a release:
 
-1. Update `version` in `skills/storm/SKILL.md`.
-2. Run validation.
-3. Commit with a clear English message.
-4. Create a matching Git tag, for example `v0.2.1`.
-5. Push only after explicitly deciding to publish.
-6. Create a GitHub Release for the tag and mark it as latest when appropriate.
+1. Choose the Git tag as the release version; do not add a top-level `version` field to `SKILL.md`.
+2. Run all validation commands from a clean checkout.
+3. Confirm the public install command discovers `storm` and includes the full bundle.
+4. Review the behavior cases and document any known gaps in the release notes.
+5. Commit with a clear English message and create an annotated Git tag.
+6. Push only after explicit approval to publish.
+7. Create a GitHub Release for the approved tag and mark it as latest when appropriate.
 
 ## Pull Requests
 

@@ -1,0 +1,9 @@
+.results/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
