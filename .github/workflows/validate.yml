@@ -10,6 +10,9 @@ on:
 permissions:
   contents: read
 
+env:
+  NO_COLOR: "1"
+
 jobs:
   validate:
     name: Validation and pinned CLI smoke test
