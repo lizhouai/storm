@@ -62,7 +62,7 @@ Prompt-native Co-STORM preview:
 Use the prompt-native Co-STORM preview to explore commercial paths for embodied AI. Start with a roundtable and maintain a mind-map style structure.
 ```
 
-In the Co-STORM preview, the agent keeps a conversation-local board with a cited mind map, discourse history, participants, open questions, sources, unused evidence, and current focus. It uses choice-first steering and routes each turn to an expert, specialist, moderator, or final-report step. Compact checkpoints make the board recoverable when the host preserves conversation state; if state or citation mappings are lost, the agent must disclose the gap and rebuild them before continuing.
+In the Co-STORM preview, the agent keeps a conversation-local board with a cited mind map, discourse history, participants, open questions, sources, unused evidence, and current focus. The simulated participants are visible in the response: the warm start gives each active expert a labeled contribution and a moderator handoff, while later turns show a named primary speaker plus a distinct respondent and periodic moderator intervention. Choice-first steering keeps the user in control. Compact checkpoints make the board recoverable when the host preserves conversation state; if state or citation mappings are lost, the agent must disclose the gap and rebuild them before continuing.
 
 Local-document constrained research:
 
@@ -117,7 +117,7 @@ Classic STORM follows this sequence:
 6. Write the standard artifact bundle.
 7. Polish, reorder citations, verify claims, and check artifact encoding.
 
-The prompt-native Co-STORM preview is used only when you explicitly ask for interactive exploration, roundtable discussion, user steering, or a mind map. It starts with a mini STORM warm start, maintains a cited mind map and checkpoint during the conversation, and writes the final report when you ask to conclude. The method reference includes a DSPy implementation blueprint, but this repository does not bundle DSPy modules or an executable Co-STORM runner.
+The prompt-native Co-STORM preview is used only when you explicitly ask for interactive exploration, roundtable discussion, user steering, or a mind map. It starts with a mini STORM warm start, renders role-attributed simulated discussion instead of hiding participants in internal state, maintains a cited mind map and checkpoint during the conversation, and writes the final report when you ask to conclude. The method reference includes a DSPy implementation blueprint, but this repository does not bundle DSPy modules, independently running expert agents, or an executable Co-STORM runner.
 
 ## Repository Structure
 

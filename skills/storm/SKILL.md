@@ -111,15 +111,15 @@ The preview is conversation-first. Do not create the four standard STORM artifac
 - `topic` and `scope`
 - `current_focus`
 - `observe_or_participate`: whether the user is currently observing, asking, or actively steering
-- `discourse_history`: compact turn log of user, expert, specialist, and moderator utterances
-- `participant_list`: active expert roles and why each role is useful now
+- `discourse_history`: compact turn log with each visible speaker's id, display name, participant type, utterance summary, and citations
+- `participant_list`: active expert roles with stable display names, purpose, current stance or question, and `last_spoke_turn`
 - `open_questions`
 - `mind_map`: hierarchical nodes with claims, uncertainty, and citation ids
 - `sources`: numbered references in first-use order
 - `unused_evidence_queue`: relevant retrieved snippets not yet used
 - `assumptions_and_decisions`
 
-Warm start with a mini Classic STORM pass: include `Basic fact writer`, add up to two focused specialists, run one interview turn per perspective, and use up to two non-empty search queries per turn. Organize the gathered evidence into the initial cited mind map before inviting user steering.
+Warm start with a mini Classic STORM pass: include `Basic fact writer`, add up to two focused specialists, run one interview turn per perspective, and use up to two non-empty search queries per turn. Organize the gathered evidence into the initial cited mind map, then render a visible `Roundtable`: give every active expert one short, distinctly attributed contribution and end with a visibly labeled moderator handoff. State once that these are simulated participants in a prompt-native preview. A participant list by itself is not a roundtable.
 
 Use choice-first steering for user interaction. Ask one question at a time, prefer two or three meaningful multiple-choice options, put the recommended option first, and keep each option short enough to select by mouse click. In Codex or any environment with a native choice UI, call that UI directly; in Codex Desktop, use `request_user_input` when available. Do not render numeric-reply prompts when a native choice UI is available. Avoid broad open-ended questions unless the decision cannot be represented as useful choices.
 
@@ -127,10 +127,11 @@ For each interaction turn:
 
 1. Incorporate the user's steering into `current_focus`.
 2. Run a `ChooseIntent` step: question answering, question asking, moderator broadening, or final report.
-3. Choose one role: general expert, rotating specialist, or moderator.
-4. Use the Perspective-Guided Expert Pipeline for expert turns: generate a question or retrieve evidence, generate a cited response, polish the utterance, and update the mind map.
-5. Use the Moderator Pipeline after two answer-only turns, repeated ground, narrow focus, or when unused evidence should be surfaced.
-6. Show the user a compact update: answer, mind-map delta, open questions, and one choice-first steering prompt for suggested next directions.
+3. Choose one named primary speaker whose expertise matches `current_focus`, and show that selection in the response rather than hiding it in board state.
+4. For every non-final turn, add one named respondent from a different active role. The respondent must challenge, extend, compare, or expose uncertainty in the primary contribution instead of paraphrasing it.
+5. Include the moderator in the warm start and no later than the second consecutive expert-led turn. Bring the moderator in sooner for repetition, narrow focus, unresolved disagreement, or promising unused evidence.
+6. Use the matching expert or moderator pipeline, then update `discourse_history`, each participant's `last_spoke_turn`, the mind map, and sources.
+7. Show a compact visible roundtable: two or three labeled utterances during routine turns, followed by the mind-map delta, open questions, and one choice-first steering prompt. Keep role contributions short and evidence-grounded so the format feels collaborative without becoming a transcript dump.
 
 Mind-map maintenance:
 
@@ -155,7 +156,7 @@ When the user asks to conclude, summarize, or write the report, generate a final
 - If no output path was specified, those files are under `.results/`.
 - If no format was specified, the four standard artifact files use `.html`.
 - Artifact paths are listed and UTF-8 verification passed.
-- Prompt-native Co-STORM previews maintain a cited mind map, expose open questions, follow the checkpoint contract, and only write Co-STORM files when explicitly requested.
+- Prompt-native Co-STORM previews maintain a cited mind map, visibly attribute distinct participant contributions, rotate speakers, expose open questions, follow the checkpoint contract, and only write Co-STORM files when explicitly requested.
 
 ## Common Mistakes
 
@@ -176,3 +177,4 @@ When the user asks to conclude, summarize, or write the report, generate a final
 | Writing the four standard artifacts for Co-STORM without a file request | Keep Co-STORM conversation-first; write only optional Co-STORM files when requested |
 | Presenting the prompt-native preview as the upstream Co-STORM runner | State the preview boundary; use Local Runner mode for an actual implementation |
 | Claiming recovery from missing conversation state | Resume from a valid checkpoint or label the reconstruction partial and identify gaps |
+| Listing roles once and then returning one unlabeled synthesized voice | Render named primary, respondent, and scheduled moderator contributions; keep board state aligned with visible speakers |

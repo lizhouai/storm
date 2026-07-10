@@ -400,6 +400,14 @@ Run a mini Classic STORM pass before the first open-ended user steering prompt:
 
 The warm start should identify the initial scope, obvious subtopics, evidence-backed facts, disputed points, and promising questions. Preserve all source-grounding rules from Classic STORM.
 
+Render the warm-start findings as a visible roundtable, not as a participant list followed by one synthesized answer:
+
+1. Label the mode once as a prompt-native preview with simulated participants.
+2. Give `Basic fact writer` one short attributed contribution.
+3. Give each selected specialist one short attributed contribution that reflects its distinct focus and does not repeat another speaker.
+4. End with a visibly labeled `Moderator` handoff that names the most useful tension, missing branch, or comparison and presents the next steering choices.
+5. Keep the initial roundtable to three or four compact utterances. Cite factual contributions inline.
+
 ### Co-STORM Board Schema
 
 Maintain this board in the conversation context and update it after each system turn:
@@ -412,12 +420,19 @@ co_storm_board:
   observe_or_participate: observe|ask|steer|report
   discourse_history:
     - turn_id: T1
-      speaker: user|expert|specialist|moderator
+      speaker_id: P1
+      speaker_type: user|expert|specialist|moderator
+      speaker_display_name: "{visible speaker label}"
       utterance_summary: "{compact discourse move}"
       citations: ["[1]"]
   participant_list:
-    - role: "{active expert role}"
+    - participant_id: P1
+      display_name: "{stable visible name or role label}"
+      participant_type: expert|specialist|moderator
+      role: "{active expert role}"
       purpose: "{why this participant is useful now}"
+      stance_or_question: "{current position, concern, or question}"
+      last_spoke_turn: T1
   open_questions:
     - id: Q1
       question: "{unresolved question}"
@@ -545,23 +560,28 @@ choice_prompt:
 
 Good Co-STORM steering questions decide the next research move, such as deepen the current branch, broaden to a neighboring branch, compare two claims, invite a moderator, or produce the final report. Avoid asking "what next?" without options.
 
-### Turn Protocol
+### Visible Roundtable And Turn Protocol
 
 For each Co-STORM turn:
 
 1. Interpret the user's latest steering utterance and update `current_focus`.
 2. Run `ChooseIntent` using `discourse_history`, `mind_map`, `unused_evidence_queue`, and `observe_or_participate`.
-3. Select exactly one role for the response:
-   - `general expert` for broad synthesis across the mind map.
-   - `specialist` for a specific technical, historical, market, policy, or methodological branch.
-   - `moderator` for broadening, reconnecting branches, or surfacing unused evidence.
-4. Route through the matching pipeline below.
-5. Update `discourse_history`, `participant_list`, `mind_map`, `sources`, and `unused_evidence_queue`.
-6. Return a compact response with:
-   - `Answer`
-   - `Mind-map update`
+3. Select exactly one named primary speaker:
+   - a `general expert` for broad synthesis across the mind map; or
+   - a `specialist` for a specific technical, historical, market, policy, or methodological branch.
+4. Select one named respondent from a different active role. Its contribution must challenge, extend, compare, or identify uncertainty in the primary speaker's contribution. Do not use it for agreement-only paraphrase.
+5. Add a visibly labeled moderator contribution when the cadence or discourse conditions below require it.
+6. Route each contribution through the matching pipeline, then update `discourse_history`, every speaker's `last_spoke_turn`, `participant_list`, `mind_map`, `sources`, and `unused_evidence_queue`.
+7. Return the following compact shape for every non-final turn:
+   - `Roundtable`
+     - `{display name} - Primary speaker`: the main cited answer or question.
+     - `{display name} - Response`: a distinct challenge, extension, comparison, or uncertainty.
+     - `Moderator`: a short bridge or grounded question when due.
+   - `Mind-map delta`
    - `Open questions`
    - `Choice-first steering prompt`
+
+The warm start must show every active expert plus the moderator. A routine non-final turn must show at least two distinct named participant voices. Keep routine roundtables to two or three short utterances, and make the visible speaker labels match the entries written to `discourse_history`. When the user selects a suggested branch, make the specialist responsible for that branch the visible primary speaker on the next turn. Rotate the primary after two consecutive leads unless the user explicitly keeps questioning the same specialist.
 
 Do not ask the user to confirm obvious next exploration steps. Offer concrete next directions and continue when the user picks one or asks a follow-up.
 
@@ -590,6 +610,7 @@ Question-answering rules:
 - Use only retrieved or already-boarded evidence for factual claims.
 - Generate a cited response, then polish for clarity without adding unsupported claims.
 - Insert the response into the smallest relevant mind-map node.
+- After the primary response, generate the named respondent's non-duplicative challenge, extension, comparison, or uncertainty from its own role and the same grounded board.
 
 Question-asking rules:
 
@@ -600,7 +621,7 @@ Question-asking rules:
 
 ### Moderator Behavior
 
-Use the moderator after two answer-only turns, when the discussion repeats, when it follows a single narrow branch for too long, or when the unused evidence queue contains relevant material.
+Show a visibly labeled moderator handoff during the warm start. Afterward, the moderator may remain silent for at most one consecutive expert-led turn; include it on the second consecutive expert-led turn. Also use it sooner when the discussion repeats, follows one narrow branch for too long, leaves a disagreement unresolved, or has relevant unused evidence.
 
 The moderator should:
 
@@ -629,6 +650,7 @@ Moderator rules:
 - Ask one grounded, thought-provoking question rather than answering immediately.
 - Add or rotate specialists when the new question needs a different perspective.
 - Keep the moderator visibly separate from expert roles so the user can tell when the system is broadening the discussion.
+- Record the moderator's visible contribution and `last_spoke_turn`; do not update moderator state without showing the user what it contributed.
 
 ### Mind-Map Maintenance
 

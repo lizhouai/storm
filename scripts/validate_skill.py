@@ -304,6 +304,7 @@ def validate_eval_cases() -> None:
     }
     seen_ids: set[str] = set()
     seen_categories: set[str] = set()
+    co_storm_cases: list[dict[str, object]] = []
 
     for index, case in enumerate(cases):
         label = f"eval case #{index + 1}"
@@ -328,6 +329,8 @@ def validate_eval_cases() -> None:
         )
         if isinstance(category, str):
             seen_categories.add(category)
+            if category == "co-storm":
+                co_storm_cases.append(case)
         require(
             isinstance(case.get("description"), str)
             and bool(case["description"].strip()),
@@ -348,11 +351,38 @@ def validate_eval_cases() -> None:
 
     missing_categories = required_categories - seen_categories
     require(not missing_categories, f"eval coverage is missing categories: {sorted(missing_categories)}")
+    require(
+        len(co_storm_cases) >= 2,
+        "eval coverage must include warm-start and follow-up Co-STORM cases",
+    )
+    co_storm_expected = "\n".join(
+        item
+        for case in co_storm_cases
+        for item in case.get("expected_behavior", [])
+        if isinstance(item, str)
+    ).lower()
+    co_storm_forbidden = "\n".join(
+        item
+        for case in co_storm_cases
+        for item in case.get("forbidden_behavior", [])
+        if isinstance(item, str)
+    ).lower()
+    require(
+        "primary speaker" in co_storm_expected
+        and "different participant" in co_storm_expected
+        and "moderator" in co_storm_expected,
+        "Co-STORM evals must cover a visible primary speaker, respondent, and moderator",
+    )
+    require(
+        "unlabeled" in co_storm_forbidden,
+        "Co-STORM evals must reject an unlabeled single-voice response",
+    )
 
 
 def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
     readme_text = read_utf8(ROOT / "README.md")
     method_text = read_utf8(SKILL_DIR / "references" / "storm-method.md")
+    method_lower = method_text.lower()
     combined = "\n".join((skill_text, method_text, readme_text, openai_text))
     combined_lower = combined.lower()
 
@@ -398,6 +428,18 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
     require(
         "never restore authorization" in combined_lower,
         "checkpoint recovery must not restore authorization for side effects",
+    )
+    require(
+        "visible roundtable" in skill_text.lower()
+        and "primary speaker" in method_lower
+        and "named respondent" in method_lower,
+        "Co-STORM contract must render visible primary and respondent voices",
+    )
+    require(
+        "last_spoke_turn" in skill_text
+        and "last_spoke_turn" in method_text
+        and "second consecutive expert-led turn" in method_lower,
+        "Co-STORM contract must track speaker rotation and moderator cadence",
     )
 
 

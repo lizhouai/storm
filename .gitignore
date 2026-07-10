@@ -1,9 +1,20 @@
-.results/
+# Python
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .venv/
+
+# Node.js
 node_modules/
+
+# Tools
+.agents/
+.codex/
+
+# Runtime artifacts
+.results/
 *.log
+
+# OS files
 .DS_Store
 Thumbs.db

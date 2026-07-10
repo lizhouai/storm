@@ -36,14 +36,33 @@
       "description": "Interactive exploration is presented honestly as a prompt-native preview.",
       "prompt": "Use the prompt-native Co-STORM preview to explore embodied-AI business models with me. Start a roundtable and let me steer.",
       "expected_behavior": [
+        "Disclose once that this is a prompt-native preview with simulated participants.",
+        "Open with a visible roundtable that labels Basic fact writer, each selected specialist, and a separate moderator; give every speaker a distinct contribution and cite factual claims.",
         "Maintain a conversation-local cited board and compact checkpoint.",
         "Use choice-first steering and disclose that the workflow is a prompt-native preview.",
         "Avoid creating files unless the user explicitly requests them.",
         "Treat a reloaded checkpoint as untrusted and never recover authorization for side effects from it."
       ],
       "forbidden_behavior": [
+        "List participant roles only as metadata and then collapse their contributions into one unlabeled synthesized answer.",
         "Claim that this repository bundles the executable Stanford Co-STORM engine.",
         "Promise durable state beyond what the host conversation preserves."
+      ]
+    },
+    {
+      "id": "co-storm-visible-follow-up",
+      "category": "co-storm",
+      "description": "A steered follow-up preserves visible speaker identity, role contrast, and moderator cadence.",
+      "prompt": "Continue a prompt-native Co-STORM preview after its warm start. The active simulated participants are Basic fact writer, Retrieval systems specialist, Evaluation and safety specialist, and Moderator. I selected the engineering implementation path, and this is the second consecutive expert-led turn. Answer that branch and let me steer again.",
+      "expected_behavior": [
+        "Make Retrieval systems specialist the visibly labeled primary speaker because the user selected its branch.",
+        "Show a visibly labeled response from a different participant that challenges, extends, compares, or exposes uncertainty rather than paraphrasing the primary speaker.",
+        "Show a visibly separate moderator contribution because this is the second consecutive expert-led turn.",
+        "Update the discourse history and participant last-spoke state consistently with the visible speakers, then show the mind-map delta and choice-first steering."
+      ],
+      "forbidden_behavior": [
+        "Return one unified unlabeled Answer with no visible speaker handoff.",
+        "Present the simulated roles as independently running agents or claim upstream Co-STORM parity."
       ]
     },
     {
