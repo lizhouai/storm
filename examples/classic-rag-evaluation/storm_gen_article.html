@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RAG evaluation frameworks - cited draft</title>
+  <style>
+    :root { color-scheme: light; --paper: #f6f3ec; --ink: #18222c; --muted: #5f6a72; --line: #cfd5d2; --accent: #0b6e69; --link: #135d8b; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.72 Georgia, serif; }
+    main { width: min(900px, calc(100% - 40px)); margin: 48px auto 80px; }
+    header { border-bottom: 1px solid var(--line); margin-bottom: 38px; padding-bottom: 26px; }
+    .stage { color: var(--accent); font: 700 12px/1.2 Arial, sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { font-size: clamp(36px, 7vw, 64px); line-height: 1.02; margin: 12px 0 16px; }
+    h2 { border-top: 1px solid var(--line); font-size: 29px; line-height: 1.2; margin-top: 42px; padding-top: 22px; }
+    p { max-width: 72ch; }
+    .lead { color: #33424d; font-size: 21px; }
+    .meta { color: var(--muted); font: 14px/1.5 Arial, sans-serif; }
+    a { color: var(--link); }
+    li { margin: 9px 0; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="stage">Cited draft · section writing complete</div>
+      <h1>Evaluating RAG systems by the failure you need to see</h1>
+      <p class="meta">Topic: RAG evaluation frameworks · Generated 2026-07-10</p>
+    </header>
+    <p class="lead">RAG evaluation is not one score. A RAG system joins retrieval with generation, so an acceptable evaluation must distinguish whether evidence was retrieved, whether the answer used that evidence faithfully, and whether the response addressed the question.</p>
+
+    <h2>Why decomposition matters</h2>
+    <p>The original RAG formulation combines a parametric sequence-to-sequence model with non-parametric memory retrieved from a dense index. The paper also identifies provenance and knowledge updating as motivations for retrieval augmentation.[1] This architecture makes end-to-end answer quality useful but insufficient: the same bad answer can originate in retrieval, context selection, or generation.</p>
+
+    <h2>Three evaluation strategies</h2>
+    <p><strong>RAGAs</strong> presents reference-free evaluation for RAG pipelines. Its published description separates retrieval relevance, faithful use of retrieved passages, and generation quality, and proposes metrics that do not require ground-truth human annotations for every evaluated sample.[2]</p>
+    <p><strong>ARES</strong> evaluates context relevance, answer faithfulness, and answer relevance. It creates synthetic training data for lightweight LM judges and combines their predictions with a small human-annotated set through prediction-powered inference. The paper evaluates this method across eight knowledge-intensive tasks and reports effectiveness under query and document domain shifts.[3]</p>
+    <p><strong>RAGChecker</strong> emphasizes diagnosis. It provides fine-grained metrics for retrieval and generation modules, evaluates eight RAG systems, and reports a meta-evaluation in which its measurements correlate more strongly with human judgments than comparison metrics used in the study.[4]</p>
+
+    <h2>Selection is an operational decision</h2>
+    <p>Based on these stated methods, RAGAs is a natural starting point when a team needs fast multidimensional feedback without constructing a reference answer for every case. ARES is designed for a more calibrated system-level evaluation loop where synthetic judge training and a small labeled evaluation set are acceptable. RAGChecker is the clearest fit when the central question is not merely which system scores higher, but which retrieval or generation behavior caused the difference. These are method-based fits, not a benchmark ranking.</p>
+
+    <h2>References</h2>
+    <ol>
+      <li><a href="https://papers.neurips.cc/paper/2020/hash/6b493230205f780e1bc26945df7481e5-Abstract.html" rel="noopener noreferrer">Lewis et al. Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks. NeurIPS 2020.</a></li>
+      <li><a href="https://aclanthology.org/2024.eacl-demo.16/" rel="noopener noreferrer">Es et al. RAGAs: Automated Evaluation of Retrieval Augmented Generation. EACL 2024.</a></li>
+      <li><a href="https://aclanthology.org/2024.naacl-long.20/" rel="noopener noreferrer">Saad-Falcon et al. ARES: An Automated Evaluation Framework for Retrieval-Augmented Generation Systems. NAACL 2024.</a></li>
+      <li><a href="https://proceedings.neurips.cc/paper_files/paper/2024/hash/27245589131d17368cccdfa990cbf16e-Abstract-Datasets_and_Benchmarks_Track.html" rel="noopener noreferrer">Ru et al. RAGChecker: A Fine-grained Framework for Diagnosing Retrieval-Augmented Generation. NeurIPS 2024.</a></li>
+    </ol>
+  </main>
+</body>
+</html>

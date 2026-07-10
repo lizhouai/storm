@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RAG evaluation frameworks - polished article</title>
+  <style>
+    :root { color-scheme: light; --paper: #f7f3e9; --ink: #16232d; --muted: #586772; --line: #ccd3d0; --teal: #096b67; --orange: #c04e2f; --blue: #175c88; --panel: #fffdf7; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.72 Georgia, serif; }
+    main { width: min(980px, calc(100% - 40px)); margin: 0 auto 88px; }
+    header { min-height: 430px; display: grid; align-content: end; border-bottom: 1px solid var(--line); padding: 70px 0 42px; position: relative; }
+    header::before { content: "[1]   [2]   [3]   [4]"; position: absolute; right: 0; top: 66px; color: var(--teal); font: 700 13px/1 Arial, sans-serif; letter-spacing: .18em; }
+    .stage { color: var(--orange); font: 700 12px/1.2 Arial, sans-serif; letter-spacing: .13em; text-transform: uppercase; }
+    h1 { max-width: 850px; font-size: clamp(42px, 8vw, 78px); line-height: .98; margin: 16px 0 22px; }
+    h2 { border-top: 1px solid var(--line); font-size: 30px; line-height: 1.18; margin-top: 52px; padding-top: 24px; }
+    p { max-width: 74ch; }
+    .lead { color: #30414c; font-size: 22px; max-width: 66ch; }
+    .meta, .eyebrow { color: var(--muted); font: 14px/1.5 Arial, sans-serif; }
+    .matrix { border-collapse: collapse; width: 100%; margin: 25px 0 14px; background: var(--panel); }
+    .matrix th, .matrix td { border-bottom: 1px solid var(--line); padding: 15px 16px; text-align: left; vertical-align: top; }
+    .matrix th { color: var(--teal); font: 700 12px/1.3 Arial, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+    .callout { border-left: 5px solid var(--orange); background: var(--panel); margin: 30px 0; padding: 20px 24px; }
+    a { color: var(--blue); }
+    li { margin: 9px 0; }
+    .verification { color: var(--muted); font: 15px/1.65 Arial, sans-serif; }
+    @media (max-width: 680px) { .matrix { display: block; overflow-x: auto; } header::before { display: none; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="stage">Polished artifact · evidence checked</div>
+      <h1>Choose RAG evaluation by the failure you need to see</h1>
+      <p class="lead">RAGAs, ARES, and RAGChecker overlap on relevance and faithfulness, but they serve different evaluation moments: fast feedback, calibrated comparison, and component diagnosis.</p>
+      <p class="meta">Generated 2026-07-10 · Four primary papers · No experiment reproduction</p>
+    </header>
+
+    <h2>The system boundary creates the evaluation boundary</h2>
+    <p>The original RAG architecture combines a parametric generator with retrieved non-parametric memory and presents provenance and updateable knowledge as core motivations.[1] That modularity means a final answer score cannot explain the whole system. Teams need evidence about retrieval quality, the generator's use of context, and the quality of the answer seen by the user.</p>
+
+    <h2>Three frameworks, three useful emphases</h2>
+    <p><strong>RAGAs</strong> targets reference-free multidimensional evaluation. Its paper distinguishes relevant and focused retrieval, faithful use of retrieved passages, and generation quality while avoiding a requirement for human ground truth on every evaluated case.[2]</p>
+    <p><strong>ARES</strong> uses synthetic data to train lightweight judges for context relevance, answer faithfulness, and answer relevance. It then uses a small human-annotated set with prediction-powered inference to mitigate judge error. The paper evaluates the approach on eight knowledge-intensive tasks and studies domain shifts.[3]</p>
+    <p><strong>RAGChecker</strong> moves from scoring toward diagnosis. It defines fine-grained retrieval and generation metrics, applies them to eight RAG systems, and reports stronger correlation with human judgments than the comparison metrics in its meta-evaluation.[4]</p>
+
+    <table class="matrix">
+      <thead>
+        <tr><th>Primary need</th><th>Method-aligned starting point</th><th>What still needs validation</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Fast regression feedback across several RAG dimensions</td><td>RAGAs</td><td>Judge sensitivity and fit to the team's domain</td></tr>
+        <tr><td>Calibrated comparison with a small labeled evaluation set</td><td>ARES</td><td>Synthetic training assumptions and annotation design</td></tr>
+        <tr><td>Localization of retrieval and generation failure patterns</td><td>RAGChecker</td><td>Metric interpretation and transfer to the deployed architecture</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout"><strong>Practical synthesis.</strong> Use automated multidimensional checks for routine regressions, escalate surprising changes to fine-grained diagnosis, and retain human review for consequential or domain-specific judgments. This is an engineering recommendation inferred from the frameworks' published designs, not a result reported by any one paper.</div>
+
+    <h2>References</h2>
+    <ol>
+      <li><a href="https://papers.neurips.cc/paper/2020/hash/6b493230205f780e1bc26945df7481e5-Abstract.html" rel="noopener noreferrer">Lewis et al. Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks. NeurIPS 2020.</a></li>
+      <li><a href="https://aclanthology.org/2024.eacl-demo.16/" rel="noopener noreferrer">Es et al. RAGAs: Automated Evaluation of Retrieval Augmented Generation. EACL 2024.</a></li>
+      <li><a href="https://aclanthology.org/2024.naacl-long.20/" rel="noopener noreferrer">Saad-Falcon et al. ARES: An Automated Evaluation Framework for Retrieval-Augmented Generation Systems. NAACL 2024.</a></li>
+      <li><a href="https://proceedings.neurips.cc/paper_files/paper/2024/hash/27245589131d17368cccdfa990cbf16e-Abstract-Datasets_and_Benchmarks_Track.html" rel="noopener noreferrer">Ru et al. RAGChecker: A Fine-grained Framework for Diagnosing Retrieval-Augmented Generation. NeurIPS 2024.</a></li>
+    </ol>
+
+    <h2>Verification notes</h2>
+    <div class="verification">
+      <ul>
+        <li>Citation order follows first appearance; every citation maps to one primary source.</li>
+        <li>Framework descriptions were checked against the linked NeurIPS or ACL Anthology abstracts on 2026-07-10.</li>
+        <li>The article does not claim independent reproduction, cost comparison, latency comparison, or universal framework superiority.</li>
+        <li>Selection guidance is explicitly marked as an inference from method design.</li>
+        <li>Later software changes may not be reflected in the cited 2024 papers.</li>
+      </ul>
+    </div>
+  </main>
+</body>
+</html>
