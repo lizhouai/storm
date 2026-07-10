@@ -24,6 +24,21 @@ It helps the agent:
 
 The default mode is classic STORM. A prompt-native Co-STORM preview is available for interactive exploration, roundtable discussion, user steering, and mind-map driven research. It is an agent workflow, not a bundled `knowledge-storm` runner.
 
+## See It in Action
+
+One Classic STORM prompt progresses through a topic-only outline, an evidence-refined outline, a cited draft, and a polished article with references and verification notes.
+
+<a href="examples/classic-rag-evaluation/storm_gen_article_polished.html">
+  <img src="examples/classic-rag-evaluation/preview.png" alt="Polished RAG evaluation article produced by the storm skill" width="760">
+</a>
+
+| Mode | What remains visible | Example |
+|---|---|---|
+| Classic STORM | Four stable research artifacts, primary sources, and verification notes | [Explore the complete RAG evaluation bundle](examples/classic-rag-evaluation/README.md) |
+| Prompt-native Co-STORM preview | Simulated participant handoffs, cited mind-map updates, open questions, and user steering | [Read the RAG evaluation roundtable](examples/co-storm-rag-evaluation/README.md) |
+
+These examples are source-grounded output snapshots, not benchmark claims. The Co-STORM example remains a prompt-native preview and does not claim to run the upstream `CoStormRunner`.
+
 ## Install
 
 Install with:
@@ -128,6 +143,10 @@ storm/
   CONTRIBUTING.md
   evals/
     cases.json
+  examples/
+    README.md
+    classic-rag-evaluation/
+    co-storm-rag-evaluation/
   scripts/
     validate_skill.py
   skills/
@@ -142,6 +161,7 @@ storm/
 - `skills/storm/SKILL.md` is the skill entry point and activation contract.
 - `skills/storm/references/storm-method.md` contains the detailed algorithm, prompts, schemas, and quality checks.
 - `skills/storm/agents/openai.yaml` provides display metadata for OpenAI-style agent surfaces.
+- `examples/` contains a complete Classic artifact bundle and a compact prompt-native Co-STORM interaction.
 - `evals/cases.json` defines manual forward-eval fixtures for critical modes and safety boundaries.
 - `scripts/validate_skill.py` enforces the repository contract without third-party Python dependencies.
 - The repository root intentionally does not contain `SKILL.md`; the standard `skills/storm/` layout lets the skills CLI install the whole bundle.
