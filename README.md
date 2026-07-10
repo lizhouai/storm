@@ -28,7 +28,7 @@ The default mode is classic STORM. A prompt-native Co-STORM preview is available
 
 One Classic STORM prompt progresses through a topic-only outline, an evidence-refined outline, a cited draft, and a polished article with references and verification notes.
 
-<a href="examples/classic-rag-evaluation/storm_gen_article_polished.html">
+<a href="https://lizhouai.github.io/storm/examples/classic-rag-evaluation/storm_gen_article_polished.html">
   <img src="examples/classic-rag-evaluation/preview.png" alt="Polished RAG evaluation article produced by the storm skill" width="760">
 </a>
 
