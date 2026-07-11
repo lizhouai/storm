@@ -15,6 +15,15 @@ SKILL_DIR = ROOT / "skills" / "storm"
 SKILL_FILE = SKILL_DIR / "SKILL.md"
 OPENAI_FILE = SKILL_DIR / "agents" / "openai.yaml"
 EVALS_FILE = ROOT / "evals" / "cases.json"
+REFERENCE_FILES = {
+    "references/artifact-contract.md",
+    "references/classic-storm.md",
+    "references/co-storm.md",
+    "references/local-runner.md",
+    "references/run-state.schema.json",
+    "references/safety-contract.md",
+    "references/storm-method.md",
+}
 
 FAILURES: list[str] = []
 
@@ -201,8 +210,9 @@ def validate_frontmatter_and_bundle() -> tuple[str, str]:
         re.findall(r"(?<![A-Za-z0-9_./-])((?:references|agents)/[A-Za-z0-9._/-]+)", body)
     )
     require(
-        "references/storm-method.md" in relative_references,
-        "SKILL.md must reference references/storm-method.md with a relative path",
+        REFERENCE_FILES <= relative_references,
+        "SKILL.md must route to every required split reference; missing "
+        f"{sorted(REFERENCE_FILES - relative_references)}",
     )
     for reference in sorted(relative_references):
         target = (SKILL_DIR / reference).resolve()
@@ -382,8 +392,24 @@ def validate_eval_cases() -> None:
 def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
     readme_text = read_utf8(ROOT / "README.md")
     method_text = read_utf8(SKILL_DIR / "references" / "storm-method.md")
-    method_lower = method_text.lower()
-    combined = "\n".join((skill_text, method_text, readme_text, openai_text))
+    classic_text = read_utf8(SKILL_DIR / "references" / "classic-storm.md")
+    co_storm_text = read_utf8(SKILL_DIR / "references" / "co-storm.md")
+    artifact_text = read_utf8(SKILL_DIR / "references" / "artifact-contract.md")
+    safety_text = read_utf8(SKILL_DIR / "references" / "safety-contract.md")
+    local_runner_text = read_utf8(SKILL_DIR / "references" / "local-runner.md")
+    combined = "\n".join(
+        (
+            skill_text,
+            method_text,
+            classic_text,
+            co_storm_text,
+            artifact_text,
+            safety_text,
+            local_runner_text,
+            readme_text,
+            openai_text,
+        )
+    )
     combined_lower = combined.lower()
 
     require(
@@ -431,15 +457,21 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
     )
     require(
         "visible roundtable" in skill_text.lower()
-        and "primary speaker" in method_lower
-        and "named respondent" in method_lower,
+        and "primary speaker" in co_storm_text.lower()
+        and "named respondent" in skill_text.lower(),
         "Co-STORM contract must render visible primary and respondent voices",
     )
     require(
         "last_spoke_turn" in skill_text
-        and "last_spoke_turn" in method_text
-        and "second consecutive expert-led turn" in method_lower,
+        and "last_spoke_turn" in co_storm_text
+        and "second consecutive expert-led turn" in co_storm_text.lower(),
         "Co-STORM contract must track speaker rotation and moderator cadence",
+    )
+    require(
+        "compatibility index" in method_text.lower()
+        and "classic-storm.md" in method_text
+        and "co-storm.md" in method_text,
+        "storm-method.md must remain a compatibility index for split references",
     )
 
 

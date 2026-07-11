@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/storm/run-state.schema.json",
+  "title": "STORM Guarded Run State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "mode",
+    "execution_backend",
+    "topic",
+    "artifact_slug",
+    "phase",
+    "status",
+    "attempt",
+    "next_action",
+    "created_at",
+    "updated_at",
+    "artifacts",
+    "metrics",
+    "errors",
+    "last_event_id"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "run_id": {"type": "string", "pattern": "^storm-[0-9a-f-]{36}$"},
+    "mode": {"enum": ["classic", "co-storm"]},
+    "execution_backend": {"enum": ["guarded-agent", "prompt-only", "local-runner"]},
+    "topic": {"type": "string", "minLength": 1},
+    "artifact_slug": {"type": "string", "minLength": 1},
+    "phase": {"type": "string", "minLength": 1},
+    "status": {"enum": ["running", "blocked", "failed", "cancelled", "complete"]},
+    "attempt": {"type": "integer", "minimum": 1},
+    "next_action": {"type": ["string", "null"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"},
+    "artifacts": {"type": "object", "additionalProperties": {"type": "object"}},
+    "metrics": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "errors": {"type": "array", "items": {"type": "object"}},
+    "last_event_id": {"type": "integer", "minimum": 0}
+  }
+}

@@ -132,7 +132,7 @@ Classic STORM follows this sequence:
 6. Write the standard artifact bundle.
 7. Polish, reorder citations, verify claims, and check artifact encoding.
 
-The prompt-native Co-STORM preview is used only when you explicitly ask for interactive exploration, roundtable discussion, user steering, or a mind map. It starts with a mini STORM warm start, renders role-attributed simulated discussion instead of hiding participants in internal state, maintains a cited mind map and checkpoint during the conversation, and writes the final report when you ask to conclude. The method reference includes a DSPy implementation blueprint, but this repository does not bundle DSPy modules, independently running expert agents, or an executable Co-STORM runner.
+The prompt-native Co-STORM preview is used only when you explicitly ask for interactive exploration, roundtable discussion, user steering, or a mind map. It starts with a mini STORM warm start, renders role-attributed simulated discussion instead of hiding participants in internal state, maintains a cited mind map and checkpoint during the conversation, and writes the final report when you ask to conclude. The Co-STORM reference describes the portable prompt protocol, but this repository does not bundle DSPy modules, independently running expert agents, or an executable Co-STORM runner.
 
 ## Repository Structure
 
@@ -155,11 +155,17 @@ storm/
       agents/
         openai.yaml
       references/
+        artifact-contract.md
+        classic-storm.md
+        co-storm.md
+        local-runner.md
+        run-state.schema.json
+        safety-contract.md
         storm-method.md
 ```
 
 - `skills/storm/SKILL.md` is the skill entry point and activation contract.
-- `skills/storm/references/storm-method.md` contains the detailed algorithm, prompts, schemas, and quality checks.
+- `skills/storm/references/` contains mode-specific workflows and contracts; `storm-method.md` remains a compatibility index.
 - `skills/storm/agents/openai.yaml` provides display metadata for OpenAI-style agent surfaces.
 - `examples/` contains a complete Classic artifact bundle and a compact prompt-native Co-STORM interaction.
 - `evals/cases.json` defines manual forward-eval fixtures for critical modes and safety boundaries.

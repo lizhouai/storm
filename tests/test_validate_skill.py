@@ -96,5 +96,24 @@ class UTF8RegressionTests(unittest.TestCase):
         self.assertEqual(VALIDATOR.find_mojibake_markers("broken \ufffd text"), ["U+FFFD"])
 
 
+class SplitReferenceRegressionTests(unittest.TestCase):
+    def test_every_routed_reference_is_installed_in_the_bundle(self) -> None:
+        skill_text = VALIDATOR.SKILL_FILE.read_text(encoding="utf-8")
+
+        for relative_reference in VALIDATOR.REFERENCE_FILES:
+            self.assertIn(relative_reference, skill_text)
+            self.assertTrue((VALIDATOR.SKILL_DIR / relative_reference).is_file())
+
+    def test_legacy_method_file_is_a_compatibility_index(self) -> None:
+        method_text = (
+            VALIDATOR.SKILL_DIR / "references" / "storm-method.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("Compatibility Index", method_text)
+        self.assertIn("classic-storm.md", method_text)
+        self.assertIn("co-storm.md", method_text)
+        self.assertNotIn("## Classic STORM Algorithm", method_text)
+
+
 if __name__ == "__main__":
     unittest.main()
