@@ -29,6 +29,31 @@ RUNTIME_FILES = {
     "scripts/storm_state.py",
     "scripts/validate_artifacts.py",
 }
+FORWARD_FIXTURES = {
+    "artifact-complete",
+    "chat-only",
+    "checkpoint-partial",
+    "claimed-complete-state-incomplete",
+    "co-storm-follow-up",
+    "co-storm-warm-start",
+    "corpus-restricted",
+    "overwrite-protected",
+    "prompt-injection-rejected",
+    "runner-safety",
+}
+FORWARD_ASSERTIONS = {
+    "artifact_bundle_valid",
+    "checkpoint_untrusted",
+    "completion_state_matches_claim",
+    "mode_matches",
+    "no_unauthorized_actions",
+    "no_unrequested_artifacts",
+    "previous_output_preserved",
+    "recovery_explicit",
+    "source_boundary_preserved",
+    "speaker_cadence",
+    "visible_roundtable",
+}
 
 FAILURES: list[str] = []
 
@@ -297,7 +322,7 @@ def validate_eval_cases() -> None:
         set(fixture) == {"schema_version", "cases"},
         "eval fixture root must contain only schema_version and cases",
     )
-    require(fixture.get("schema_version") == 1, "eval schema_version must equal 1")
+    require(fixture.get("schema_version") == 2, "eval schema_version must equal 2")
 
     cases = fixture.get("cases")
     require(isinstance(cases, list) and bool(cases), "eval cases must be a non-empty list")
@@ -311,6 +336,7 @@ def validate_eval_cases() -> None:
         "prompt",
         "expected_behavior",
         "forbidden_behavior",
+        "forward",
     }
     required_categories = {
         "artifact",
@@ -320,6 +346,8 @@ def validate_eval_cases() -> None:
         "prompt-injection",
         "runner-safety",
         "overwrite",
+        "recovery",
+        "state-integrity",
     }
     seen_ids: set[str] = set()
     seen_categories: set[str] = set()
@@ -367,6 +395,42 @@ def validate_eval_cases() -> None:
             is_nonempty_string_list(case.get("forbidden_behavior")),
             f"{label} forbidden_behavior must be a non-empty string list",
         )
+        forward = case.get("forward")
+        require(isinstance(forward, dict), f"{label} forward must be an object")
+        if isinstance(forward, dict):
+            require(
+                set(forward)
+                == {"executor", "fixture", "expected_outcome", "assertions"},
+                f"{label} forward fields are invalid",
+            )
+            require(
+                forward.get("executor") == "fixture",
+                f"{label} forward executor must equal fixture",
+            )
+            require(
+                isinstance(forward.get("fixture"), str)
+                and bool(re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", forward["fixture"])),
+                f"{label} forward fixture must be lowercase kebab-case",
+            )
+            require(
+                forward.get("fixture") in FORWARD_FIXTURES,
+                f"{label} uses an unsupported forward fixture",
+            )
+            require(
+                forward.get("expected_outcome") in {"pass", "violation_detected"},
+                f"{label} forward expected_outcome is invalid",
+            )
+            require(
+                is_nonempty_string_list(forward.get("assertions")),
+                f"{label} forward assertions must be a non-empty string list",
+            )
+            assertions = forward.get("assertions")
+            if isinstance(assertions, list):
+                require(
+                    set(assertions) <= FORWARD_ASSERTIONS,
+                    f"{label} uses unsupported forward assertions: "
+                    f"{sorted(set(assertions) - FORWARD_ASSERTIONS)}",
+                )
 
     missing_categories = required_categories - seen_categories
     require(not missing_categories, f"eval coverage is missing categories: {sorted(missing_categories)}")
@@ -374,6 +438,7 @@ def validate_eval_cases() -> None:
         len(co_storm_cases) >= 2,
         "eval coverage must include warm-start and follow-up Co-STORM cases",
     )
+    require(len(cases) >= 10, "eval coverage must contain at least 10 executable cases")
     co_storm_expected = "\n".join(
         item
         for case in co_storm_cases

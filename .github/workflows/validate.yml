@@ -38,6 +38,10 @@ jobs:
       - name: Run validator regression tests
         run: python -m unittest discover -s tests -p "test_*.py"
 
+      - name: Run offline forward-eval canary
+        continue-on-error: true
+        run: python scripts/run_forward_evals.py --repetitions 10 --output .forward-evals
+
       - name: Discover skill with pinned CLI
         shell: bash
         run: |

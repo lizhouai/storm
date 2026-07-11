@@ -132,6 +132,14 @@ Classic STORM follows this sequence:
 6. Write the standard artifact bundle.
 7. Polish, reorder citations, verify claims, and check artifact encoding.
 
+File-producing Classic and Local Runner requests default to the bundled guarded
+runtime when Python is available. A versioned `.storm-run/run.json` and event
+log define the only next action; zero-dependency scripts enforce state
+transitions, artifact structure, hashes, and citation mappings before the run
+can reach `COMPLETE`. Prompt-only fallback remains available when Python is
+unavailable or the user explicitly requests chat-only output, with the reduced
+enforcement boundary stated in the response.
+
 The prompt-native Co-STORM preview is used only when you explicitly ask for interactive exploration, roundtable discussion, user steering, or a mind map. It starts with a mini STORM warm start, renders role-attributed simulated discussion instead of hiding participants in internal state, maintains a cited mind map and checkpoint during the conversation, and writes the final report when you ask to conclude. The Co-STORM reference describes the portable prompt protocol, but this repository does not bundle DSPy modules, independently running expert agents, or an executable Co-STORM runner.
 
 ## Repository Structure
@@ -148,6 +156,7 @@ storm/
     classic-rag-evaluation/
     co-storm-rag-evaluation/
   scripts/
+    run_forward_evals.py
     validate_skill.py
   skills/
     storm/
@@ -162,13 +171,18 @@ storm/
         run-state.schema.json
         safety-contract.md
         storm-method.md
+      scripts/
+        audit_citations.py
+        storm_state.py
+        validate_artifacts.py
 ```
 
 - `skills/storm/SKILL.md` is the skill entry point and activation contract.
 - `skills/storm/references/` contains mode-specific workflows and contracts; `storm-method.md` remains a compatibility index.
 - `skills/storm/agents/openai.yaml` provides display metadata for OpenAI-style agent surfaces.
 - `examples/` contains a complete Classic artifact bundle and a compact prompt-native Co-STORM interaction.
-- `evals/cases.json` defines manual forward-eval fixtures for critical modes and safety boundaries.
+- `evals/cases.json` defines executable forward-eval cases and objective oracle assertions for critical modes and safety boundaries.
+- `scripts/run_forward_evals.py` runs isolated offline contract canaries and can invoke an explicitly configured real-Agent command without making that nondeterministic path a release gate.
 - `scripts/validate_skill.py` enforces the repository contract without third-party Python dependencies.
 - The repository root intentionally does not contain `SKILL.md`; the standard `skills/storm/` layout lets the skills CLI install the whole bundle.
 
@@ -205,6 +219,7 @@ Run the repository checks and validate local discovery:
 
 ```bash
 python scripts/validate_skill.py
+python scripts/run_forward_evals.py --repetitions 10 --output .results/forward-evals --replace
 npx skills add . --list
 ```
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import unittest
 from pathlib import Path
 
@@ -140,6 +141,17 @@ class GuardedRoutingRegressionTests(unittest.TestCase):
         self.assertIn("explicitly requests chat-only", skill_text)
         self.assertIn("unified guarded state", local_runner_text)
         self.assertIn("citation audit", local_runner_text)
+
+
+class ForwardEvalSchemaRegressionTests(unittest.TestCase):
+    def test_eval_fixture_has_executable_forward_oracles(self) -> None:
+        fixture = json.loads(VALIDATOR.EVALS_FILE.read_text(encoding="utf-8"))
+
+        self.assertEqual(fixture["schema_version"], 2)
+        self.assertGreaterEqual(len(fixture["cases"]), 10)
+        for case in fixture["cases"]:
+            self.assertEqual(case["forward"]["executor"], "fixture")
+            self.assertTrue(case["forward"]["assertions"])
 
 
 if __name__ == "__main__":
