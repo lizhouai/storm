@@ -1,0 +1,20 @@
+{
+  "claims": [
+    {
+      "claim": "Deterministic retrieval uses fixed evidence",
+      "citation_ids": [1],
+      "source_ids": [1],
+      "support_status": "supported",
+      "evidence_note": "The fixed S1 snippet directly supports the claim.",
+      "action": "keep"
+    },
+    {
+      "claim": "Citation auditing rejects unsupported claims",
+      "citation_ids": [2],
+      "source_ids": [2],
+      "support_status": "supported",
+      "evidence_note": "The fixed S2 snippet directly supports the claim.",
+      "action": "keep"
+    }
+  ]
+}

@@ -8,7 +8,6 @@ import hashlib
 import json
 import os
 import re
-import tempfile
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
@@ -280,49 +279,14 @@ def validate_artifacts(
         }
 
     if not errors and state is not None and selected_run_path is not None:
-        for name, metadata in artifacts.items():
-            existing = state["artifacts"].get(name, {})
-            if not isinstance(existing, dict):
-                existing = {}
-            state["artifacts"][name] = {
-                **existing,
-                "path": name,
-                "format": "html",
-                "sha256": metadata["sha256"],
-            }
         try:
-            _atomic_write_json(selected_run_path, state)
-        except OSError as exc:
-            errors.append(f"run.json: atomic update failed: {exc}")
+            import storm_state
+
+            storm_state.record_artifacts(selected_run_path, artifacts)
+        except (OSError, ValueError, storm_state.StateError) as exc:
+            errors.append(f"run.json: guarded artifact update failed: {exc}")
 
     return {"valid": not errors, "errors": errors, "artifacts": artifacts}
-
-
-def _atomic_write_json(path: Path, value: Any) -> None:
-    path.parent.mkdir(parents=False, exist_ok=True)
-    temporary_path: Path | None = None
-    try:
-        with tempfile.NamedTemporaryFile(
-            "w",
-            encoding="utf-8",
-            dir=path.parent,
-            prefix=f".{path.name}.",
-            suffix=".tmp",
-            delete=False,
-        ) as handle:
-            temporary_path = Path(handle.name)
-            json.dump(value, handle, ensure_ascii=False, indent=2, sort_keys=True)
-            handle.write("\n")
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(temporary_path, path)
-        temporary_path = None
-    finally:
-        if temporary_path is not None:
-            try:
-                temporary_path.unlink()
-            except FileNotFoundError:
-                pass
 
 
 def _build_parser() -> argparse.ArgumentParser:

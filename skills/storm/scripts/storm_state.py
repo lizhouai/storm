@@ -330,6 +330,15 @@ def validate_event_log(state: dict[str, Any], events: list[dict[str, Any]]) -> N
                     or event.get("error") is not None
                 ):
                     raise StateError(f"event {expected_id} has invalid transition fields")
+            elif event_name == "artifacts_validated":
+                if (
+                    after_phase != before_phase
+                    or after_status != before_status
+                    or event.get("error") is not None
+                ):
+                    raise StateError(
+                        f"event {expected_id} has invalid artifact validation fields"
+                    )
             elif event_name in {"failed", "blocked"}:
                 expected_status = "failed" if event_name == "failed" else "blocked"
                 error = event.get("error")
@@ -596,6 +605,56 @@ def commit_state_change(
         run_path, json.dumps(updated_state, ensure_ascii=False, indent=2) + "\n"
     )
     return updated_state
+
+
+def record_artifacts(
+    run_path: Path, artifacts: dict[str, dict[str, str]]
+) -> dict[str, Any]:
+    """Record validated public artifact metadata through the state hash chain."""
+    run_path = run_path.resolve()
+    state, events = load_guarded_run(run_path)
+    normalized: dict[str, dict[str, str]] = {}
+    for name, metadata in sorted(artifacts.items()):
+        if not isinstance(name, str) or not name or Path(name).name != name:
+            raise StateError("artifact names must be direct relative filenames")
+        if not isinstance(metadata, dict):
+            raise StateError(f"artifact metadata must be an object: {name}")
+        digest = metadata.get("sha256")
+        artifact_format = metadata.get("format")
+        if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+            raise StateError(f"artifact sha256 is invalid: {name}")
+        if artifact_format != "html":
+            raise StateError(f"artifact format is invalid: {name}")
+        normalized[name] = {
+            "path": name,
+            "format": artifact_format,
+            "sha256": digest,
+        }
+
+    updated_state = copy.deepcopy(state)
+    for name, metadata in normalized.items():
+        existing = updated_state["artifacts"].get(name, {})
+        if not isinstance(existing, dict):
+            existing = {}
+        updated_state["artifacts"][name] = {**existing, **metadata}
+    if updated_state["artifacts"] == state["artifacts"]:
+        return state
+    if state["status"] != "running":
+        raise StateError(
+            f"cannot change artifacts for a run with status {state['status']!r}"
+        )
+
+    key = event_key("record_artifacts", {"artifacts": normalized})
+    if any(event.get("idempotency_key") == key for event in events):
+        return state
+    return commit_state_change(
+        run_path,
+        state,
+        events,
+        updated_state,
+        "artifacts_validated",
+        key,
+    )
 
 
 def advance_run(args: argparse.Namespace) -> dict[str, Any]:

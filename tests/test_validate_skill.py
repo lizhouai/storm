@@ -100,7 +100,7 @@ class SplitReferenceRegressionTests(unittest.TestCase):
     def test_every_routed_reference_is_installed_in_the_bundle(self) -> None:
         skill_text = VALIDATOR.SKILL_FILE.read_text(encoding="utf-8")
 
-        for relative_reference in VALIDATOR.REFERENCE_FILES:
+        for relative_reference in VALIDATOR.REFERENCE_FILES | VALIDATOR.RUNTIME_FILES:
             self.assertIn(relative_reference, skill_text)
             self.assertTrue((VALIDATOR.SKILL_DIR / relative_reference).is_file())
 

@@ -24,6 +24,11 @@ REFERENCE_FILES = {
     "references/safety-contract.md",
     "references/storm-method.md",
 }
+RUNTIME_FILES = {
+    "scripts/audit_citations.py",
+    "scripts/storm_state.py",
+    "scripts/validate_artifacts.py",
+}
 
 FAILURES: list[str] = []
 
@@ -207,12 +212,16 @@ def validate_frontmatter_and_bundle() -> tuple[str, str]:
     )
 
     relative_references = set(
-        re.findall(r"(?<![A-Za-z0-9_./-])((?:references|agents)/[A-Za-z0-9._/-]+)", body)
+        re.findall(
+            r"(?<![A-Za-z0-9_./-])((?:references|agents|scripts)/[A-Za-z0-9._/-]+)",
+            body,
+        )
     )
+    required_bundle_files = REFERENCE_FILES | RUNTIME_FILES
     require(
-        REFERENCE_FILES <= relative_references,
-        "SKILL.md must route to every required split reference; missing "
-        f"{sorted(REFERENCE_FILES - relative_references)}",
+        required_bundle_files <= relative_references,
+        "SKILL.md must route to every required supporting file; missing "
+        f"{sorted(required_bundle_files - relative_references)}",
     )
     for reference in sorted(relative_references):
         target = (SKILL_DIR / reference).resolve()

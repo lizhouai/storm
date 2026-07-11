@@ -1,0 +1,16 @@
+{
+  "sources": [
+    {
+      "id": 1,
+      "source_id": "S1",
+      "title": "Deterministic retrieval fixture",
+      "url": "https://example.com/retrieval"
+    },
+    {
+      "id": 2,
+      "source_id": "S2",
+      "title": "Citation audit fixture",
+      "url": "https://example.com/audit"
+    }
+  ]
+}

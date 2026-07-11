@@ -1,0 +1,12 @@
+[
+  {
+    "id": "P1",
+    "role": "Basic fact writer",
+    "focus": "Core terminology and workflow"
+  },
+  {
+    "id": "P2",
+    "role": "Evaluation specialist",
+    "focus": "Citation and artifact verification"
+  }
+]

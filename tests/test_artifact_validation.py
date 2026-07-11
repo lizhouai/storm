@@ -168,28 +168,56 @@ class ArtifactValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             output_dir = Path(directory)
             self._write_valid_bundle(output_dir)
+            state_cli = SCRIPTS_DIR / "storm_state.py"
+            initialized = subprocess.run(
+                [
+                    sys.executable,
+                    str(state_cli),
+                    "init",
+                    "--mode",
+                    "classic",
+                    "--topic",
+                    "RAG evaluation",
+                    "--output",
+                    str(output_dir),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(initialized.returncode, 0, initialized.stderr)
             control_dir = output_dir / ".storm-run"
-            control_dir.mkdir()
             run_path = control_dir / "run.json"
-            original = {
-                "topic": "RAG evaluation",
-                "artifacts": {"existing": {"preserved": True}},
-                "metrics": {"events": 1},
-            }
-            run_path.write_text(json.dumps(original), encoding="utf-8")
+            original = json.loads(run_path.read_text(encoding="utf-8"))
 
             report = validate_artifacts(output_dir, run_path=run_path)
 
             self.assertTrue(report["valid"])
             updated = json.loads(run_path.read_text(encoding="utf-8"))
             self.assertEqual(updated["metrics"], original["metrics"])
-            self.assertEqual(updated["artifacts"]["existing"], {"preserved": True})
             for name in ARTIFACT_NAMES:
                 self.assertEqual(
                     updated["artifacts"][name]["sha256"],
                     report["artifacts"][name]["sha256"],
                 )
                 self.assertEqual(updated["artifacts"][name]["path"], name)
+            status = subprocess.run(
+                [sys.executable, str(state_cli), "status", "--run", str(run_path)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(status.returncode, 0, status.stderr)
+            events = [
+                json.loads(line)
+                for line in (control_dir / "event-log.jsonl").read_text(
+                    encoding="utf-8"
+                ).splitlines()
+            ]
+            self.assertEqual(events[-1]["event"], "artifacts_validated")
+            self.assertEqual(events[-1]["artifact_hashes"], {
+                name: report["artifacts"][name]["sha256"] for name in ARTIFACT_NAMES
+            })
             self.assertEqual(list(control_dir.glob("*.tmp")), [])
 
     def test_run_state_update_rejects_out_of_scope_or_malformed_paths(self):

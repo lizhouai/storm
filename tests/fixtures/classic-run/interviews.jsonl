@@ -1,0 +1,2 @@
+{"perspective_id":"P1","turn":1,"question":"How is retrieval made deterministic?","queries":["deterministic retrieval fixed evidence"],"source_ids":["S1"]}
+{"perspective_id":"P2","turn":1,"question":"How are unsupported claims handled?","queries":["citation audit unsupported claims"],"source_ids":["S2"]}
