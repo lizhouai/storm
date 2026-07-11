@@ -15,9 +15,16 @@ These checked-in examples show the two public workflows provided by the `storm` 
 
 [RAG evaluation roundtable](co-storm-rag-evaluation/README.md) shows a compact interactive run with visibly attributed simulated participants, a moderator handoff, a cited mind-map delta, and choice-first steering.
 
+[RAG technology research](co-storm-rag-technology/README.md) follows a complete
+interactive run from warm start through four user-steered research rounds,
+explicit file-producing work, and the final `生成报告` instruction. Its
+[rendered HTML report](https://lizhouai.github.io/storm/examples/co-storm-rag-technology/rag-technology-research-report.html)
+is checked in as the end-to-end output snapshot.
+
 ## Provenance
 
-- Generated: 2026-07-10
-- Source boundary: peer-reviewed primary papers in NeurIPS and ACL Anthology
-- Retrieval date: 2026-07-10
-- Validation: citations were checked against the linked paper abstracts; no experimental results were independently reproduced
+- Compact examples generated: 2026-07-10
+- End-to-end Co-STORM report generated: 2026-07-11
+- Source boundary: research papers and official technical documentation linked from each example
+- Retrieval dates: 2026-07-10 and 2026-07-11 respectively
+- Validation: citation targets and artifact structure were checked; no experimental results were independently reproduced

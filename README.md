@@ -35,7 +35,7 @@ One Classic STORM prompt progresses through a topic-only outline, an evidence-re
 | Mode | What remains visible | Example |
 |---|---|---|
 | Classic STORM | Four stable research artifacts, primary sources, and verification notes | [Explore the complete RAG evaluation bundle](examples/classic-rag-evaluation/README.md) |
-| Prompt-native Co-STORM preview | Simulated participant handoffs, cited mind-map updates, open questions, and user steering | [Read the RAG evaluation roundtable](examples/co-storm-rag-evaluation/README.md) |
+| Prompt-native Co-STORM preview | Simulated participant handoffs, cited mind-map updates, open questions, and user steering | [Read the compact RAG evaluation roundtable](examples/co-storm-rag-evaluation/README.md) · [Open the end-to-end RAG technology report](https://lizhouai.github.io/storm/examples/co-storm-rag-technology/rag-technology-research-report.html) |
 
 These examples are source-grounded output snapshots, not benchmark claims. The Co-STORM example remains a prompt-native preview and does not claim to run the upstream `CoStormRunner`.
 
@@ -78,6 +78,25 @@ Use the prompt-native Co-STORM preview to explore commercial paths for embodied 
 ```
 
 In the Co-STORM preview, the agent keeps a conversation-local board with a cited mind map, discourse history, participants, open questions, sources, unused evidence, and current focus. The simulated participants are visible in the response: the warm start gives each active expert a labeled contribution and a moderator handoff, while later turns show a named primary speaker plus a distinct respondent and periodic moderator intervention. Choice-first steering keeps the user in control. Compact checkpoints make the board recoverable when the host preserves conversation state; if state or citation mappings are lost, the agent must disclose the gap and rebuild them before continuing.
+
+### Ending a Co-STORM Roundtable
+
+No special command or fixed round count is required. Any clear instruction to
+conclude the discussion triggers the final-report path. For an in-chat report,
+say:
+
+```text
+Conclude the Co-STORM roundtable now. Synthesize the current mind map, cited evidence, disagreements, uncertainties, and open questions into the final report.
+```
+
+To save the result as files, include the format and destination explicitly:
+
+```text
+Conclude the Co-STORM roundtable and save the cited mind map and final report as Markdown under .results/embodied-ai/.
+```
+
+Without an explicit file request, the final report remains in the conversation.
+With one, the skill writes the two files described in [Output Format](#output-format).
 
 Local-document constrained research:
 
@@ -141,6 +160,35 @@ unavailable or the user explicitly requests chat-only output, with the reduced
 enforcement boundary stated in the response.
 
 The prompt-native Co-STORM preview is used only when you explicitly ask for interactive exploration, roundtable discussion, user steering, or a mind map. It starts with a mini STORM warm start, renders role-attributed simulated discussion instead of hiding participants in internal state, maintains a cited mind map and checkpoint during the conversation, and writes the final report when you ask to conclude. The Co-STORM reference describes the portable prompt protocol, but this repository does not bundle DSPy modules, independently running expert agents, or an executable Co-STORM runner.
+
+### Co-STORM Interaction Flow
+
+```mermaid
+flowchart TD
+    A["Explicit interactive Co-STORM request"] --> B["Initialize the conversation-local board"]
+    B --> C["Warm start once<br/>Basic fact writer and up to two specialists"]
+    C --> D["Build the cited mind map and open questions"]
+    D --> E["Render the visible roundtable<br/>Active experts and Moderator"]
+    E --> F{"User's next action"}
+
+    F -->|"Continue or redirect"| G["Update the current focus and evidence"]
+    G --> H["Named primary speaker and a different respondent"]
+    H --> I["Moderator intervenes when due"]
+    I --> J["Update discourse, citations, mind-map delta, and open questions"]
+    J --> E
+
+    F -->|"Save, resume, or hand off"| K["Validate and write a compact checkpoint"]
+    K --> E
+
+    F -->|"Conclude"| L["Synthesize selected branches, disagreements, and uncertainties"]
+    L --> M["Return the final report<br/>Write files only when requested"]
+
+    N["Interactive rounds have no fixed limit"] -.-> E
+```
+
+The warm start happens once. After that, the roundtable remains in the
+interactive loop until the user asks to conclude; continuing, redirecting, or
+checkpointing does not consume a predefined number of rounds.
 
 ## Repository Structure
 

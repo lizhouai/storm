@@ -108,3 +108,6 @@ Evaluation intent
 - The moderator connects unused evidence to the next research decision.
 - The mind map records a cited delta and unresolved questions.
 - No durable recovery or upstream Co-STORM parity is claimed.
+
+For a longer run that reaches explicit file output and a final report, see the
+[RAG technology research example](../co-storm-rag-technology/README.md).
