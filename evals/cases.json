@@ -109,6 +109,58 @@
       }
     },
     {
+      "id": "co-storm-conclusion-chat",
+      "category": "co-storm",
+      "description": "A conversation-first conclusion returns the final report in chat without creating files.",
+      "prompt": "Conclude the current prompt-native Co-STORM roundtable and synthesize the selected branches, disagreements, uncertainties, open questions, and references into the final report. Keep the report in chat and do not create files.",
+      "expected_behavior": [
+        "End the interactive loop and return the final report in chat.",
+        "Synthesize selected branches, disagreements, uncertainties, open questions, and references.",
+        "Create no files because the user explicitly requested conversation-only output."
+      ],
+      "forbidden_behavior": [
+        "Ask the user to continue steering after they concluded the roundtable.",
+        "Create a mind-map or report file without file authorization."
+      ],
+      "forward": {
+        "executor": "fixture",
+        "fixture": "co-storm-conclusion-chat",
+        "expected_outcome": "pass",
+        "assertions": [
+          "mode_matches",
+          "final_report_boundary",
+          "co_storm_artifact_boundary",
+          "no_unauthorized_actions"
+        ]
+      }
+    },
+    {
+      "id": "co-storm-persisted-report",
+      "category": "co-storm",
+      "description": "An explicit report-only file request writes only the standardized Co-STORM report artifact.",
+      "prompt": "Conclude the current prompt-native Co-STORM roundtable and save only the final report as HTML under .results/rag-technology/. Do not write a separate mind-map file.",
+      "expected_behavior": [
+        "End the interactive loop and synthesize the final report.",
+        "Write only .results/rag-technology/co_storm_report.html.",
+        "Do not create Classic STORM artifacts or an unrequested Co-STORM mind-map file."
+      ],
+      "forbidden_behavior": [
+        "Create both Co-STORM files when the user requested only the report.",
+        "Treat the Classic artifact validator as proof that the Co-STORM report content is verified."
+      ],
+      "forward": {
+        "executor": "fixture",
+        "fixture": "co-storm-persisted-report",
+        "expected_outcome": "pass",
+        "assertions": [
+          "mode_matches",
+          "final_report_boundary",
+          "co_storm_artifact_boundary",
+          "no_unauthorized_actions"
+        ]
+      }
+    },
+    {
       "id": "corpus-restriction",
       "category": "corpus",
       "description": "A local-corpus boundary prevents implicit web retrieval.",

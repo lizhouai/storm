@@ -35,7 +35,7 @@ class ForwardEvalRunnerTests(unittest.TestCase):
         )
         return result
 
-    def test_fixture_contract_canary_exercises_all_ten_cases(self) -> None:
+    def test_fixture_contract_canary_exercises_all_twelve_cases(self) -> None:
         expected_ids = {
             case["id"]
             for case in json.loads(CASES.read_text(encoding="utf-8"))["cases"]
@@ -54,9 +54,9 @@ class ForwardEvalRunnerTests(unittest.TestCase):
 
             self.assertEqual(summary["adapter_label"], "offline-fixture-contract-canary")
             self.assertFalse(summary["release_gate"])
-            self.assertEqual(summary["case_count"], 10)
-            self.assertEqual(summary["run_count"], 10)
-            self.assertEqual(summary["passed_count"], 10)
+            self.assertEqual(summary["case_count"], 12)
+            self.assertEqual(summary["run_count"], 12)
+            self.assertEqual(summary["passed_count"], 12)
             self.assertEqual(summary["illegal_transition_count"], 0)
             self.assertEqual(summary["sandbox_verification"], "offline-fixture-only")
             self.assertEqual({item["case_id"] for item in summary["results"]}, expected_ids)
@@ -70,7 +70,7 @@ class ForwardEvalRunnerTests(unittest.TestCase):
                 ["claimed_complete_state_incomplete"],
             )
             self.assertTrue(negative["passed"])
-            self.assertEqual(len(list((output / "traces").glob("*.json"))), 10)
+            self.assertEqual(len(list((output / "traces").glob("*.json"))), 12)
             self.assertEqual(
                 json.loads((output / "summary.json").read_text(encoding="utf-8")),
                 summary,

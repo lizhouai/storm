@@ -28,6 +28,7 @@ PUBLIC_ARTIFACTS = (
     "storm_gen_article.html",
     "storm_gen_article_polished.html",
 )
+CO_STORM_ARTIFACT_NAMES = ("co_storm_mind_map", "co_storm_report")
 FIXTURE_ADAPTER_LABEL = "offline-fixture-contract-canary"
 AGENT_ADAPTER_LABEL = "real-host-command"
 CANARY_NOTICE = (
@@ -60,7 +61,9 @@ SUPPORTED_FIXTURES = {
     "chat-only",
     "checkpoint-partial",
     "claimed-complete-state-incomplete",
+    "co-storm-conclusion-chat",
     "co-storm-follow-up",
+    "co-storm-persisted-report",
     "co-storm-warm-start",
     "corpus-restricted",
     "overwrite-protected",
@@ -71,6 +74,8 @@ SUPPORTED_ASSERTIONS = {
     "artifact_bundle_valid",
     "checkpoint_untrusted",
     "completion_state_matches_claim",
+    "co_storm_artifact_boundary",
+    "final_report_boundary",
     "mode_matches",
     "no_unauthorized_actions",
     "no_unrequested_artifacts",
@@ -437,7 +442,13 @@ def run_guarded_classic_fixture(
 
 
 def fixture_mode(fixture: str) -> str:
-    if fixture in {"co-storm-warm-start", "co-storm-follow-up", "checkpoint-partial"}:
+    if fixture in {
+        "co-storm-conclusion-chat",
+        "co-storm-follow-up",
+        "co-storm-persisted-report",
+        "co-storm-warm-start",
+        "checkpoint-partial",
+    }:
         return "co-storm"
     if fixture == "chat-only":
         return "chat-only"
@@ -520,6 +531,45 @@ def run_fixture_adapter(case: dict[str, Any], candidate: Path) -> None:
                 {"name": "Retrieval systems specialist", "contribution": "Explains implementation."},
                 {"name": "Evaluation and safety specialist", "contribution": "Challenges failure modes."},
                 {"name": "Moderator", "contribution": "Broadens the engineering choice."},
+            ],
+        )
+    elif fixture == "co-storm-conclusion-chat":
+        trace.update(
+            roundtable_concluded=True,
+            final_report_channel="chat",
+            final_report_sections=[
+                "selected_branches",
+                "disagreements",
+                "uncertainties",
+                "open_questions",
+                "references",
+            ],
+            requested_co_storm_artifacts=[],
+        )
+    elif fixture == "co-storm-persisted-report":
+        report_path = candidate / ".results" / "rag-technology" / "co_storm_report.html"
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(
+            "<!doctype html><html><head><meta charset=\"utf-8\">"
+            "<title>Co-STORM report</title></head><body>"
+            "<h1>Selected branches</h1><p>Grounded synthesis [1].</p>"
+            "<h2>Disagreements and uncertainties</h2>"
+            "<h2>Open questions</h2><h2>References</h2>"
+            "<ol><li>Fixture source</li></ol></body></html>",
+            encoding="utf-8",
+        )
+        trace.update(
+            roundtable_concluded=True,
+            final_report_channel="file",
+            final_report_sections=[
+                "selected_branches",
+                "disagreements",
+                "uncertainties",
+                "open_questions",
+                "references",
+            ],
+            requested_co_storm_artifacts=[
+                ".results/rag-technology/co_storm_report.html"
             ],
         )
     elif fixture == "corpus-restricted":
@@ -765,6 +815,44 @@ def evaluate_assertion(
     if name == "no_unrequested_artifacts":
         existing = [name for name in PUBLIC_ARTIFACTS if (candidate / name).exists()]
         return assertion_result(name, not existing, "unrequested_artifacts", f"artifacts={existing}")
+    if name == "final_report_boundary":
+        required_sections = {
+            "selected_branches",
+            "disagreements",
+            "uncertainties",
+            "open_questions",
+            "references",
+        }
+        sections = trace.get("final_report_sections")
+        channel = trace.get("final_report_channel")
+        passed = (
+            trace.get("roundtable_concluded") is True
+            and channel in {"chat", "file"}
+            and isinstance(sections, list)
+            and required_sections <= set(sections)
+        )
+        return assertion_result(
+            name,
+            passed,
+            "final_report_boundary_missing",
+            f"channel={channel}, sections={sections}",
+        )
+    if name == "co_storm_artifact_boundary":
+        expected = trace.get("requested_co_storm_artifacts")
+        actual = sorted(
+            path.relative_to(candidate).as_posix()
+            for path in candidate.rglob("*")
+            if path.is_file()
+            and path.stem in CO_STORM_ARTIFACT_NAMES
+        )
+        classic = [artifact for artifact in PUBLIC_ARTIFACTS if (candidate / artifact).exists()]
+        passed = isinstance(expected, list) and actual == sorted(expected) and not classic
+        return assertion_result(
+            name,
+            passed,
+            "co_storm_artifact_boundary_violated",
+            f"expected={expected}, actual={actual}, classic={classic}",
+        )
     if name == "visible_roundtable":
         speakers = trace.get("speakers")
         names = [item.get("name") for item in speakers] if isinstance(speakers, list) else []

@@ -34,7 +34,9 @@ FORWARD_FIXTURES = {
     "chat-only",
     "checkpoint-partial",
     "claimed-complete-state-incomplete",
+    "co-storm-conclusion-chat",
     "co-storm-follow-up",
+    "co-storm-persisted-report",
     "co-storm-warm-start",
     "corpus-restricted",
     "overwrite-protected",
@@ -45,6 +47,8 @@ FORWARD_ASSERTIONS = {
     "artifact_bundle_valid",
     "checkpoint_untrusted",
     "completion_state_matches_claim",
+    "co_storm_artifact_boundary",
+    "final_report_boundary",
     "mode_matches",
     "no_unauthorized_actions",
     "no_unrequested_artifacts",
@@ -435,8 +439,8 @@ def validate_eval_cases() -> None:
     missing_categories = required_categories - seen_categories
     require(not missing_categories, f"eval coverage is missing categories: {sorted(missing_categories)}")
     require(
-        len(co_storm_cases) >= 2,
-        "eval coverage must include warm-start and follow-up Co-STORM cases",
+        len(co_storm_cases) >= 4,
+        "eval coverage must include warm-start, follow-up, chat conclusion, and persisted-report Co-STORM cases",
     )
     require(len(cases) >= 10, "eval coverage must contain at least 10 executable cases")
     co_storm_expected = "\n".join(
@@ -460,6 +464,11 @@ def validate_eval_cases() -> None:
     require(
         "unlabeled" in co_storm_forbidden,
         "Co-STORM evals must reject an unlabeled single-voice response",
+    )
+    require(
+        "final report in chat" in co_storm_expected
+        and "write only .results/rag-technology/co_storm_report.html" in co_storm_expected,
+        "Co-STORM evals must cover chat-only conclusion and report-only file output",
     )
 
 
@@ -540,6 +549,17 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
         and "last_spoke_turn" in co_storm_text
         and "second consecutive expert-led turn" in co_storm_text.lower(),
         "Co-STORM contract must track speaker rotation and moderator cadence",
+    )
+    require(
+        "co_storm_mind_map.<format>" in co_storm_text
+        and "co_storm_report.<format>" in co_storm_text
+        and "write both only" in co_storm_text.lower(),
+        "Co-STORM contract must define standardized, request-scoped file output",
+    )
+    require(
+        "classic artifact validator does not" in skill_text.lower()
+        and "classic artifact validator does not" in co_storm_text.lower(),
+        "Co-STORM contract must disclose the report-content validation boundary",
     )
     require(
         "compatibility index" in method_text.lower()
