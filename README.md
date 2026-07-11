@@ -73,6 +73,9 @@ Use the prompt-native Co-STORM preview to explore commercial paths for embodied 
 
 In the Co-STORM preview, the agent keeps a conversation-local board with a cited mind map, discourse history, participants, open questions, sources, unused evidence, and current focus. The simulated participants are visible in the response: the warm start gives each active expert a labeled contribution and a moderator handoff, while later turns show a named primary speaker plus a distinct respondent and periodic moderator intervention. Choice-first steering keeps the user in control. When persistence is explicitly requested, the guarded state CLI records schema-checked turns in an atomic hash-linked log; ordinary conversation mode remains prompt-only. If state or citation mappings are lost, the agent must disclose the gap and rebuild them before continuing.
 
+> [!IMPORTANT]
+> The two or three steering options shown at the end of each round are suggestions, not a closed menu. If none fits, ignore them and reply in your own words with any question, direction, constraint, or request to conclude; the next round follows that free-form input.
+
 ### Ending a Co-STORM Roundtable
 
 No special command or fixed round count is required. Any clear instruction to
