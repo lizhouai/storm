@@ -87,6 +87,10 @@ use prompt-only fallback and state that it cannot mechanically enforce
 transitions, recovery, hashes, or artifact gates. Conversation-first Co-STORM
 also stays prompt-only unless the user requests persisted state; a persisted
 Co-STORM run uses the same state CLI with `mode=co-storm`.
+For Co-STORM, that CLI guards the outer lifecycle and checkpoint integrity; the
+Classic artifact validator does not mechanically verify Co-STORM mind-map or
+report contents. Follow `references/co-storm.md` for their output contract and
+review source and citation support before reporting completion.
 
 ## Stable Deliverables
 

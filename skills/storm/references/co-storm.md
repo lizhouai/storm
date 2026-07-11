@@ -58,5 +58,21 @@ off. Apply the output-conflict and atomic-publication rules.
 ## Final Report
 
 When the user concludes, synthesize the selected branches, disagreements,
-uncertainties, open questions, and references. Write files only when explicitly
-requested; interactive mode remains conversation-first by default.
+uncertainties, open questions, and references. Interactive mode remains
+conversation-first by default, so return the report in chat unless the user
+explicitly requests file output.
+
+For file output, honor the requested destination and format and write only the
+requested Co-STORM artifacts:
+
+- `co_storm_mind_map.<format>` for the cited mind map and open questions.
+- `co_storm_report.<format>` for the final report synthesized from the board.
+
+Write both only when the user requests a complete Co-STORM file bundle. When a
+file request omits both format and destination, default to HTML under
+`.results/<topic-slug>/`. Apply the output-conflict and atomic-publication rules.
+
+For persistent runs, the state CLI guards outer lifecycle transitions and
+checkpoint integrity. The Classic artifact validator does not validate these
+Co-STORM files, so review source and citation support before claiming that the
+report itself is verified.
