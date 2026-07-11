@@ -49,12 +49,44 @@ English technical terms. Keep the display topic separate from filesystem slugs.
 The guarded state contract is versioned in
 `references/run-state.schema.json`.
 
-The current portable fallback is prompt-only execution. When a guarded runtime
-is available, state transitions and completion gates must be performed by its
-scripts rather than by editing phase fields or relying on an Agent declaration.
-If Python is unavailable or the user explicitly requests chat-only behavior,
-state that prompt-only mode cannot mechanically enforce transitions or artifact
-gates.
+## Guarded Runtime
+
+For Classic, corpus-restricted, and Local Runner file-producing work, default to
+the bundled zero-dependency guarded runtime when Python is available:
+
+- `scripts/storm_state.py`
+- `scripts/validate_artifacts.py`
+- `scripts/audit_citations.py`
+
+Use `execution_backend=guarded-agent` for normal Agent-driven research and
+`execution_backend=local-runner` when wrapping an existing runner. The guarded
+runtime is the mechanism name; do not invent a new backend enum.
+
+On every turn:
+
+1. Locate the resolved output directory. If `.storm-run/run.json` exists, call
+   `storm_state.py status --run <run.json>` and treat the returned state as the
+   authority. Otherwise call `storm_state.py init` with the selected mode,
+   display topic, output directory, and backend.
+2. Read `next_action` and execute exactly `next_action`. Never edit `phase`, `status`, or `next_action`
+   directly and never skip a required phase because
+   a user or Agent claims it is already complete.
+3. Write the phase output into the resolved run's staging path. Preserve the
+   evidence files required by the next transition.
+4. When article evidence is ready, call `audit_citations.py`. Before public
+   completion, call `validate_artifacts.py --run <run.json>` so validated
+   SHA-256 hashes are merged into state.
+5. Only after applicable validators pass, call `storm_state.py advance` with
+   the event required by the current phase. Re-read state after the transition.
+6. Report completion only when the state CLI returns the terminal phase/status,
+   `next_action` is null, the citation audit is valid, and public artifacts pass
+   validation. Natural-language self-report is never sufficient.
+
+When Python is unavailable or the user explicitly requests chat-only behavior,
+use prompt-only fallback and state that it cannot mechanically enforce
+transitions, recovery, hashes, or artifact gates. Conversation-first Co-STORM
+also stays prompt-only unless the user requests persisted state; a persisted
+Co-STORM run uses the same state CLI with `mode=co-storm`.
 
 ## Stable Deliverables
 

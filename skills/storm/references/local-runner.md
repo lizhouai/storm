@@ -18,6 +18,9 @@ script, environment, or installed STORM implementation.
    four artifacts to standalone UTF-8 HTML.
 7. Apply `artifact-contract.md` and `safety-contract.md`. Runner success does
    not bypass citation, encoding, HTML, overwrite, or publication gates.
+8. Map runner progress and outputs into the unified guarded state, run the
+   citation audit and artifact validator, and advance through `storm_state.py`;
+   never treat runner exit status alone as completion.
 
 If the user asks for an official Co-STORM implementation, use this route and
 verify that implementation rather than presenting the prompt-native preview as

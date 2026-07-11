@@ -115,5 +115,32 @@ class SplitReferenceRegressionTests(unittest.TestCase):
         self.assertNotIn("## Classic STORM Algorithm", method_text)
 
 
+class GuardedRoutingRegressionTests(unittest.TestCase):
+    def test_file_producing_modes_use_the_bundled_guarded_clis(self) -> None:
+        skill_text = VALIDATOR.SKILL_FILE.read_text(encoding="utf-8")
+
+        for runtime_path in (
+            "scripts/storm_state.py",
+            "scripts/validate_artifacts.py",
+            "scripts/audit_citations.py",
+        ):
+            self.assertIn(runtime_path, skill_text)
+        self.assertIn("execute exactly `next_action`", skill_text)
+        self.assertIn(
+            "never edit `phase`, `status`, or `next_action`", skill_text.lower()
+        )
+
+    def test_prompt_only_fallback_and_local_runner_mapping_are_explicit(self) -> None:
+        skill_text = VALIDATOR.SKILL_FILE.read_text(encoding="utf-8")
+        local_runner_text = (
+            VALIDATOR.SKILL_DIR / "references" / "local-runner.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("Python is unavailable", skill_text)
+        self.assertIn("explicitly requests chat-only", skill_text)
+        self.assertIn("unified guarded state", local_runner_text)
+        self.assertIn("citation audit", local_runner_text)
+
+
 if __name__ == "__main__":
     unittest.main()
