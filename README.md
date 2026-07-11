@@ -1,7 +1,7 @@
 # STORM Research Skill
 
-[![Release](https://img.shields.io/github/v/release/lizhouai/storm?label=release&style=for-the-badge&labelColor=555555&color=007ec6&cacheSeconds=300)](https://github.com/lizhouai/storm/releases/latest)
-[![License](https://img.shields.io/github/license/lizhouai/storm?label=license&style=for-the-badge&labelColor=555555&color=97ca00)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/lizhouai/storm-research-skill?label=release&style=for-the-badge&labelColor=555555&color=007ec6&cacheSeconds=300)](https://github.com/lizhouai/storm-research-skill/releases/latest)
+[![License](https://img.shields.io/github/license/lizhouai/storm-research-skill?label=license&style=for-the-badge&labelColor=555555&color=97ca00)](LICENSE)
 
 An Agent Skill for STORM-style deep research: perspective-guided interviews, source-grounded synthesis, structured outlines, inline citations, and verification notes.
 
@@ -28,14 +28,14 @@ The default mode is classic STORM. A prompt-native Co-STORM preview is available
 
 One Classic STORM prompt progresses through a topic-only outline, an evidence-refined outline, a cited draft, and a polished article with references and verification notes.
 
-<a href="https://lizhouai.github.io/storm/examples/classic-rag-evaluation/storm_gen_article_polished.html">
+<a href="https://lizhouai.github.io/storm-research-skill/examples/classic-rag-evaluation/storm_gen_article_polished.html">
   <img src="examples/classic-rag-evaluation/preview.png" alt="Polished RAG evaluation article produced by the storm skill" width="760">
 </a>
 
 | Mode | What remains visible | Example |
 |---|---|---|
 | Classic STORM | Four stable research artifacts, primary sources, and verification notes | [Explore the complete RAG evaluation bundle](examples/classic-rag-evaluation/README.md) |
-| Prompt-native Co-STORM preview | Simulated participant handoffs, cited mind-map updates, open questions, and user steering | [Read the compact RAG evaluation roundtable](examples/co-storm-rag-evaluation/README.md) · [Open the end-to-end RAG technology report](https://lizhouai.github.io/storm/examples/co-storm-rag-technology/rag-technology-research-report.html) |
+| Prompt-native Co-STORM preview | Simulated participant handoffs, cited mind-map updates, open questions, and user steering | [Read the compact RAG evaluation roundtable](examples/co-storm-rag-evaluation/README.md) · [Open the end-to-end RAG technology report](https://lizhouai.github.io/storm-research-skill/examples/co-storm-rag-technology/rag-technology-research-report.html) |
 
 These examples are source-grounded output snapshots, not benchmark claims. The Co-STORM example remains a prompt-native preview and does not claim to run the upstream `CoStormRunner`.
 
@@ -44,7 +44,7 @@ These examples are source-grounded output snapshots, not benchmark claims. The C
 Install with:
 
 ```bash
-npx skills add lizhouai/storm
+npx skills add lizhouai/storm-research-skill
 ```
 
 This installs the skill for the current project. Add `-g` only when you intentionally want a global installation, and use the same scope when updating.
@@ -115,10 +115,16 @@ Unless you request another format, the skill produces a standard STORM artifact 
 
 If you explicitly ask for chat-only or no files, the skill can instead return a compact in-chat brief with perspectives, query log, citations, references, and verification notes.
 
-The Co-STORM preview is conversation-first and does not create the four standard STORM files unless you explicitly ask for file output. If you do request files, it writes:
+The Co-STORM preview is conversation-first and never creates the four Classic
+STORM files. Without an explicit file request, its final report remains in the
+conversation. For file output, it writes only the requested Co-STORM artifacts:
 
 - `co_storm_mind_map.<format>`: the cited mind map and open questions
 - `co_storm_report.<format>`: the final report synthesized from the mind map
+
+Ask for a complete Co-STORM file bundle to receive both. If the request names
+neither a format nor a destination, file output defaults to HTML under
+`.results/<topic-slug>/`.
 
 ## When To Use It
 
@@ -161,6 +167,11 @@ enforcement boundary stated in the response.
 
 The prompt-native Co-STORM preview is used only when you explicitly ask for interactive exploration, roundtable discussion, user steering, or a mind map. It starts with a mini STORM warm start, renders role-attributed simulated discussion instead of hiding participants in internal state, maintains a cited mind map and checkpoint during the conversation, and writes the final report when you ask to conclude. The Co-STORM reference describes the portable prompt protocol, but this repository does not bundle DSPy modules, independently running expert agents, or an executable Co-STORM runner.
 
+For persistent Co-STORM runs, the guarded state CLI protects outer lifecycle
+transitions and checkpoint integrity. The bundled Classic artifact validator
+does not mechanically verify Co-STORM mind-map or report contents; the agent
+must still review their source and citation support before claiming completion.
+
 ### Co-STORM Interaction Flow
 
 ```mermaid
@@ -193,19 +204,23 @@ checkpointing does not consume a predefined number of rounds.
 ## Repository Structure
 
 ```text
-storm/
+storm-research-skill/
   README.md
   LICENSE
   CONTRIBUTING.md
+  assets/
+    social-preview.png
   evals/
     cases.json
   examples/
     README.md
     classic-rag-evaluation/
     co-storm-rag-evaluation/
+    co-storm-rag-technology/
   scripts/
     run_forward_evals.py
     validate_skill.py
+  tests/
   skills/
     storm/
       SKILL.md
@@ -228,7 +243,8 @@ storm/
 - `skills/storm/SKILL.md` is the skill entry point and activation contract.
 - `skills/storm/references/` contains mode-specific workflows and contracts; `storm-method.md` remains a compatibility index.
 - `skills/storm/agents/openai.yaml` provides display metadata for OpenAI-style agent surfaces.
-- `examples/` contains a complete Classic artifact bundle and a compact prompt-native Co-STORM interaction.
+- `assets/social-preview.png` is the upload-ready repository social preview; the `Fact Researcher` label is visual shorthand for the canonical Basic fact writer role.
+- `examples/` contains a complete Classic artifact bundle, a compact prompt-native Co-STORM interaction, and an end-to-end Co-STORM report run.
 - `evals/cases.json` defines executable forward-eval cases and objective oracle assertions for critical modes and safety boundaries.
 - `scripts/run_forward_evals.py` runs isolated offline contract canaries and can invoke an explicitly configured real-Agent command without making that nondeterministic path a release gate.
 - `scripts/validate_skill.py` enforces the repository contract without third-party Python dependencies.
@@ -259,8 +275,8 @@ npx skills update storm -g
 Clone the repository:
 
 ```bash
-git clone https://github.com/lizhouai/storm.git
-cd storm
+git clone https://github.com/lizhouai/storm-research-skill.git
+cd storm-research-skill
 ```
 
 Run the repository checks and validate local discovery:

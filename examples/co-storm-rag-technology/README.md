@@ -8,7 +8,7 @@ the upstream `CoStormRunner`.
 
 ## Final report
 
-- [Open the rendered HTML report](https://lizhouai.github.io/storm/examples/co-storm-rag-technology/rag-technology-research-report.html)
+- [Open the rendered HTML report](https://lizhouai.github.io/storm-research-skill/examples/co-storm-rag-technology/rag-technology-research-report.html)
 - [View the checked-in HTML source](rag-technology-research-report.html)
 
 The report covers production RAG architecture, Chunking, Hybrid Retrieval,

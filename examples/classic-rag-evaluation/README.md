@@ -12,10 +12,10 @@ Use the storm skill to research RAG evaluation frameworks. Produce the standard 
 
 | Stage | Artifact | What changes |
 |---|---|---|
-| Direct outline | [direct_gen_outline.html](https://lizhouai.github.io/storm/examples/classic-rag-evaluation/direct_gen_outline.html) | Topic-only structure before retrieval |
-| Refined outline | [storm_gen_outline.html](https://lizhouai.github.io/storm/examples/classic-rag-evaluation/storm_gen_outline.html) | Adds dimensions and framework distinctions found in the papers |
-| Draft article | [storm_gen_article.html](https://lizhouai.github.io/storm/examples/classic-rag-evaluation/storm_gen_article.html) | Writes the evidence-backed comparison with inline citations |
-| Polished article | [storm_gen_article_polished.html](https://lizhouai.github.io/storm/examples/classic-rag-evaluation/storm_gen_article_polished.html) | Tightens the decision guidance and adds verification notes |
+| Direct outline | [direct_gen_outline.html](https://lizhouai.github.io/storm-research-skill/examples/classic-rag-evaluation/direct_gen_outline.html) | Topic-only structure before retrieval |
+| Refined outline | [storm_gen_outline.html](https://lizhouai.github.io/storm-research-skill/examples/classic-rag-evaluation/storm_gen_outline.html) | Adds dimensions and framework distinctions found in the papers |
+| Draft article | [storm_gen_article.html](https://lizhouai.github.io/storm-research-skill/examples/classic-rag-evaluation/storm_gen_article.html) | Writes the evidence-backed comparison with inline citations |
+| Polished article | [storm_gen_article_polished.html](https://lizhouai.github.io/storm-research-skill/examples/classic-rag-evaluation/storm_gen_article_polished.html) | Tightens the decision guidance and adds verification notes |
 
 ## Research trace
 

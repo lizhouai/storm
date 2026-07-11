@@ -18,7 +18,7 @@ These checked-in examples show the two public workflows provided by the `storm` 
 [RAG technology research](co-storm-rag-technology/README.md) follows a complete
 interactive run from warm start through four user-steered research rounds,
 explicit file-producing work, and the final `生成报告` instruction. Its
-[rendered HTML report](https://lizhouai.github.io/storm/examples/co-storm-rag-technology/rag-technology-research-report.html)
+[rendered HTML report](https://lizhouai.github.io/storm-research-skill/examples/co-storm-rag-technology/rag-technology-research-report.html)
 is checked in as the end-to-end output snapshot.
 
 ## Provenance

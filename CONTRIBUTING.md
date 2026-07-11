@@ -16,7 +16,7 @@ storm/
   scripts/
     run_forward_evals.py
     validate_skill.py
-  tests/test_validate_skill.py
+  tests/
   skills/
     storm/
       SKILL.md
