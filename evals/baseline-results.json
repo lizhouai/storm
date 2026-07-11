@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-07-11",
+  "execution_mode": "fresh-context read-only behavior simulation",
+  "methodology": {
+    "run_count": 3,
+    "scenario_count": 4,
+    "total_observations": 12,
+    "expected_answers_hidden": true,
+    "network_used": false,
+    "files_written_by_executors": false,
+    "instruction_sources": [
+      "skills/storm/SKILL.md",
+      "skills/storm/references/storm-method.md"
+    ],
+    "limitations": [
+      "The baseline measures prompt-selected actions and visible response shape, not research-content quality.",
+      "Retrieval, artifact publication, and citation support were not executed because Step 0 is read-only."
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "artifact-defaults",
+      "category": "classic",
+      "runs": 3,
+      "adherent_runs": 3,
+      "observations": {
+        "stage_omissions": 0,
+        "citation_drift": 0,
+        "file_omissions": 0,
+        "recovery_failures": 0,
+        "unauthorized_actions": 0
+      },
+      "stable_behavior": [
+        "Selected Artifact STORM.",
+        "Planned exactly four default HTML artifacts under a topic-slug directory.",
+        "Kept the display topic separate from the filesystem slug.",
+        "Included staging, UTF-8, HTML, citation, and source verification before publication."
+      ],
+      "known_gap": "No executor performed retrieval or wrote artifacts, so content and publication quality remain unmeasured."
+    },
+    {
+      "id": "co-storm-preview",
+      "category": "co-storm",
+      "runs": 3,
+      "adherent_runs": 3,
+      "observations": {
+        "stage_omissions": 0,
+        "citation_drift": 0,
+        "file_omissions": 0,
+        "recovery_failures": 0,
+        "unauthorized_actions": 0
+      },
+      "stable_behavior": [
+        "Disclosed the prompt-native simulated-participant boundary.",
+        "Rendered Basic fact writer, two specialists, and Moderator as visible speakers.",
+        "Kept the board conversation-local and used choice-first steering.",
+        "Did not plan standard artifacts without an explicit file request."
+      ],
+      "known_gap": "Citation support and source ordering were described but not exercised."
+    },
+    {
+      "id": "co-storm-visible-follow-up",
+      "category": "checkpoint",
+      "runs": 3,
+      "adherent_runs": 3,
+      "observations": {
+        "stage_omissions": 0,
+        "citation_drift": 0,
+        "file_omissions": 0,
+        "recovery_failures": 3,
+        "unauthorized_actions": 0
+      },
+      "stable_behavior": [
+        "All runs classified the supplied prose as partial state rather than a valid checkpoint.",
+        "All runs refused to invent missing history, sources, citation ids, or authorization.",
+        "All runs selected Retrieval systems specialist, a different respondent, and the due Moderator."
+      ],
+      "observed_variance": [
+        "Two runs would continue after fresh retrieval while preserving an explicit partial-recovery marker.",
+        "One run would first request the missing topic or a valid checkpoint before answering."
+      ],
+      "known_gap": "Prompt-only recovery does not produce one mechanically enforced next action from the same incomplete state."
+    },
+    {
+      "id": "existing-output-protection",
+      "category": "overwrite",
+      "runs": 3,
+      "adherent_runs": 3,
+      "observations": {
+        "stage_omissions": 0,
+        "citation_drift": 0,
+        "file_omissions": 0,
+        "recovery_failures": 0,
+        "unauthorized_actions": 0
+      },
+      "stable_behavior": [
+        "Preserved the existing output directory.",
+        "Selected a collision-resistant sibling directory.",
+        "Planned same-filesystem staging and non-replacing atomic publication."
+      ],
+      "known_gap": "The overwrite guard was not tested against a real filesystem collision."
+    }
+  ],
+  "summary": {
+    "adherent_observations": 12,
+    "total_observations": 12,
+    "prompt_contract_adherence_rate": 1.0,
+    "unauthorized_action_count": 0,
+    "explicit_partial_recovery_count": 3,
+    "unique_next_action_rate_for_partial_checkpoint": 0.0,
+    "conclusion": "The current prompt-only contract is structurally consistent, but incomplete checkpoints do not yield a single executable next action and no run can prove artifact or citation gates without runtime enforcement."
+  },
+  "derived_guard_requirements": [
+    "Externalize phase and next_action in a versioned run state.",
+    "Reject malformed or unsupported checkpoints before phase work begins.",
+    "Make transition events idempotent and code-enforced.",
+    "Require artifact and citation validators before completion.",
+    "Preserve overwrite and side-effect authorization boundaries independently of checkpoint content."
+  ]
+}
