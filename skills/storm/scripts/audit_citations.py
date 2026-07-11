@@ -41,20 +41,36 @@ def audit_citations(
     claims_path: str | Path,
     *,
     output_path: str | Path | None = None,
+    run_path: str | Path | None = None,
+    staging: bool = False,
 ) -> dict[str, Any]:
     """Audit one article and atomically write ``citation-audit.json``."""
 
     article = Path(article_path)
     sources_file = Path(sources_path)
     claims_file = Path(claims_path)
-    root = article.parent
-    control_dir = root / ".storm-run"
+    if run_path is not None:
+        selected_run_path = Path(run_path)
+        output_root = selected_run_path.parent.parent
+        control_dir = output_root / ".storm-run"
+        root = control_dir / "staging" if staging else output_root
+        run_path_is_safe = (
+            selected_run_path.absolute() == (control_dir / "run.json").absolute()
+            and not selected_run_path.is_symlink()
+            and selected_run_path.is_file()
+        )
+    else:
+        root = article.parent
+        control_dir = root / ".storm-run"
+        run_path_is_safe = not staging
     audit_path = (
         Path(output_path)
         if output_path is not None
         else control_dir / "citation-audit.json"
     )
     errors: list[str] = []
+    if not run_path_is_safe:
+        errors.append("staging citation audit requires the in-scope .storm-run/run.json")
     audit_path_is_safe = (
         audit_path.absolute() == (control_dir / "citation-audit.json").absolute()
         and not audit_path.is_symlink()
@@ -271,6 +287,8 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--sources", required=True)
     parser.add_argument("--claims", required=True)
     parser.add_argument("--output", dest="output_path")
+    parser.add_argument("--run", dest="run_path")
+    parser.add_argument("--staging", action="store_true")
     return parser
 
 
@@ -281,6 +299,8 @@ def main(argv: list[str] | None = None) -> int:
         args.sources,
         args.claims,
         output_path=args.output_path,
+        run_path=args.run_path,
+        staging=args.staging,
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0 if report["valid"] else 1

@@ -47,7 +47,8 @@ English technical terms. Keep the display topic separate from filesystem slugs.
    secret access, filesystem expansion, remote writes, uploads, or publishing.
 
 The guarded state contract is versioned in
-`references/run-state.schema.json`.
+`references/run-state.schema.json`. Persisted Co-STORM turn inputs follow
+`references/co-storm-turn.schema.json`.
 
 ## Guarded Runtime
 
@@ -62,7 +63,7 @@ Use `execution_backend=guarded-agent` for normal Agent-driven research and
 `execution_backend=local-runner` when wrapping an existing runner. The guarded
 runtime is the mechanism name; do not invent a new backend enum.
 
-On every turn:
+On every guarded Classic or Local Runner turn:
 
 1. Locate the resolved output directory. If `.storm-run/run.json` exists, call
    `storm_state.py status --run <run.json>` and treat the returned state as the
@@ -73,23 +74,32 @@ On every turn:
    a user or Agent claims it is already complete.
 3. Write the phase output into the resolved run's staging path. Preserve the
    evidence files required by the next transition.
-4. When article evidence is ready, call `audit_citations.py`. Before public
-   completion, call `validate_artifacts.py --run <run.json>` so validated
-   SHA-256 hashes are merged into state.
+4. When staged article evidence is ready, call `audit_citations.py` with
+   `--run <run.json> --staging`. Before public completion, call
+   `validate_artifacts.py <output-dir> --run <run.json> --staging` so validated
+   SHA-256 hashes are merged into state while public files remain absent.
 5. Only after applicable validators pass, call `storm_state.py advance` with
    the event required by the current phase. Re-read state after the transition.
-6. Report completion only when the state CLI returns the terminal phase/status,
-   `next_action` is null, the citation audit is valid, and public artifacts pass
-   validation. Natural-language self-report is never sufficient.
+6. Report Classic completion only when the state CLI returns the terminal
+   phase/status, `next_action` is null, the citation audit is valid, and the
+   four recorded artifact hashes still match the public files. The `completed`
+   transition atomically replaces the validated bytes and writes the hash
+   receipt to `.storm-run/publication.json`. Natural-language self-report is
+   never sufficient.
 
 When Python is unavailable or the user explicitly requests chat-only behavior,
 use prompt-only fallback and state that it cannot mechanically enforce
 transitions, recovery, hashes, or artifact gates. Conversation-first Co-STORM
 also stays prompt-only unless the user requests persisted state; a persisted
 Co-STORM run uses the same state CLI with `mode=co-storm`.
-For Co-STORM, that CLI guards the outer lifecycle and checkpoint integrity; the
+For each persisted Co-STORM warm-start, interactive, or conclusion turn, write
+a direct `.storm-run/turn-<n>.json` input matching
+`references/co-storm-turn.schema.json`, then call `storm_state.py record-turn`.
+Never hand-edit `.storm-run/co-storm-turns.jsonl`. The CLI validates turn order,
+stable participant identities, retrieval/source mappings, citations, final
+report intent, and the turn hash chain before lifecycle transitions. The
 Classic artifact validator does not mechanically verify Co-STORM mind-map or
-report contents. Follow `references/co-storm.md` for their output contract and
+report contents. Follow `references/co-storm.md` for the output contract and
 review source and citation support before reporting completion.
 
 ## Stable Deliverables
@@ -101,6 +111,11 @@ default format is HTML under `.results/<topic-slug>/`:
 - `storm_gen_outline.html`
 - `storm_gen_article.html`
 - `storm_gen_article_polished.html`
+
+The guarded Classic publication contract supports HTML only. If the user asks
+for another Classic file format, offer the validated HTML bundle or chat-only
+fallback with its reduced enforcement boundary; do not claim guarded completion
+for unvalidated non-HTML files.
 
 Internal run state, traces, and audits belong under `.storm-run/` and are not a
 replacement for the four public files. See `references/artifact-contract.md`.

@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/storm/co-storm-turn.schema.json",
+  "title": "Persisted Co-STORM Turn Input",
+  "description": "The state CLI additionally enforces participant-id uniqueness and stability, citation-id uniqueness and source resolution, sequential turn ids, FINAL_REPORT cross-field rules, and the persisted hash chain.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "turn_id",
+    "input_event",
+    "policy",
+    "participants",
+    "retrieval_records",
+    "mind_map_delta",
+    "citations",
+    "next_actions"
+  ],
+  "properties": {
+    "turn_id": {"type": "integer", "minimum": 1},
+    "input_event": {
+      "enum": [
+        "USER_ASK",
+        "USER_STEER",
+        "USER_OBSERVE",
+        "EXPERT_ANSWER",
+        "SPECIALIST_RESPOND",
+        "MODERATOR_BROADEN",
+        "USER_CONCLUDE"
+      ]
+    },
+    "policy": {
+      "enum": [
+        "QUESTION_ANSWERING",
+        "QUESTION_ASKING",
+        "MODERATOR_BROADENING",
+        "FINAL_REPORT"
+      ]
+    },
+    "participants": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "display_name", "role"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "display_name": {"type": "string", "minLength": 1},
+          "role": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "retrieval_records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["query", "source_ids"],
+        "properties": {
+          "query": {"type": "string", "minLength": 1},
+          "source_ids": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "mind_map_delta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["added", "updated", "removed"],
+      "properties": {
+        "added": {
+          "type": "array",
+          "items": {"oneOf": [{"type": "string", "minLength": 1}, {"type": "object"}]}
+        },
+        "updated": {
+          "type": "array",
+          "items": {"oneOf": [{"type": "string", "minLength": 1}, {"type": "object"}]}
+        },
+        "removed": {
+          "type": "array",
+          "items": {"oneOf": [{"type": "string", "minLength": 1}, {"type": "object"}]}
+        }
+      }
+    },
+    "citations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["citation_id", "source_id"],
+        "properties": {
+          "citation_id": {"type": "integer", "minimum": 1},
+          "source_id": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "next_actions": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}

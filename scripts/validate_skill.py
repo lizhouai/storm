@@ -15,10 +15,15 @@ SKILL_DIR = ROOT / "skills" / "storm"
 SKILL_FILE = SKILL_DIR / "SKILL.md"
 OPENAI_FILE = SKILL_DIR / "agents" / "openai.yaml"
 EVALS_FILE = ROOT / "evals" / "cases.json"
+SCHEMA_FILES = {
+    "references/co-storm-turn.schema.json",
+    "references/run-state.schema.json",
+}
 REFERENCE_FILES = {
     "references/artifact-contract.md",
     "references/classic-storm.md",
     "references/co-storm.md",
+    "references/co-storm-turn.schema.json",
     "references/local-runner.md",
     "references/run-state.schema.json",
     "references/safety-contract.md",
@@ -303,6 +308,24 @@ def validate_utf8_hygiene() -> None:
             FAILURES.append(f"possible mojibake marker {marker} in {relative}")
 
 
+def validate_json_schemas() -> None:
+    for relative in sorted(SCHEMA_FILES):
+        path = SKILL_DIR / relative
+        try:
+            schema = json.loads(read_utf8(path))
+        except json.JSONDecodeError as error:
+            FAILURES.append(
+                f"invalid JSON in {relative}: {error.msg} at line {error.lineno}"
+            )
+            continue
+        require(isinstance(schema, dict), f"{relative} must contain a JSON object")
+        if isinstance(schema, dict):
+            require(
+                schema.get("$schema") == "https://json-schema.org/draft/2020-12/schema",
+                f"{relative} must use JSON Schema draft 2020-12",
+            )
+
+
 def is_nonempty_string_list(value: Any) -> bool:
     return (
         isinstance(value, list)
@@ -477,6 +500,9 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
     method_text = read_utf8(SKILL_DIR / "references" / "storm-method.md")
     classic_text = read_utf8(SKILL_DIR / "references" / "classic-storm.md")
     co_storm_text = read_utf8(SKILL_DIR / "references" / "co-storm.md")
+    co_storm_turn_schema = read_utf8(
+        SKILL_DIR / "references" / "co-storm-turn.schema.json"
+    )
     artifact_text = read_utf8(SKILL_DIR / "references" / "artifact-contract.md")
     safety_text = read_utf8(SKILL_DIR / "references" / "safety-contract.md")
     local_runner_text = read_utf8(SKILL_DIR / "references" / "local-runner.md")
@@ -486,6 +512,7 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
             method_text,
             classic_text,
             co_storm_text,
+            co_storm_turn_schema,
             artifact_text,
             safety_text,
             local_runner_text,
@@ -562,6 +589,28 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
         "Co-STORM contract must disclose the report-content validation boundary",
     )
     require(
+        "record-turn" in skill_text
+        and "record-turn" in co_storm_text
+        and "co-storm-turn.schema.json" in skill_text,
+        "persistent Co-STORM must route structured turns through the state CLI",
+    )
+    require(
+        "direct_gen_outline.html" in artifact_text
+        and "storm_gen_article_polished.html" in artifact_text
+        and "guarded publication path supports html only" in artifact_text.lower(),
+        "guarded Classic output must remain an HTML-only four-artifact contract",
+    )
+    require(
+        "publication.json" in skill_text
+        and "publication.json" in artifact_text
+        and "publication.json" in readme_text,
+        "Classic completion must document its atomic publication hash receipt",
+    )
+    require(
+        "--staging" in skill_text and ".storm-run/staging" in artifact_text,
+        "guarded Classic validation must remain staging-first",
+    )
+    require(
         "compatibility index" in method_text.lower()
         and "classic-storm.md" in method_text
         and "co-storm.md" in method_text,
@@ -573,6 +622,7 @@ def main() -> int:
     skill_text, _ = validate_frontmatter_and_bundle()
     openai_text = validate_openai_metadata()
     validate_utf8_hygiene()
+    validate_json_schemas()
     validate_eval_cases()
     validate_behavior_contracts(skill_text, openai_text)
 

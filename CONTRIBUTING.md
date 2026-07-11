@@ -5,14 +5,23 @@ Thanks for helping improve the STORM Research Skill. This repository is intentio
 ## Repository Layout
 
 ```text
-storm/
+storm-research-skill/
   .github/workflows/validate.yml
   .gitattributes
   .gitignore
   README.md
   LICENSE
   CONTRIBUTING.md
-  evals/cases.json
+  assets/
+    social-preview.png
+  evals/
+    baseline-results.json
+    cases.json
+  examples/
+    README.md
+    classic-rag-evaluation/
+    co-storm-rag-evaluation/
+    co-storm-rag-technology/
   scripts/
     run_forward_evals.py
     validate_skill.py
@@ -26,6 +35,7 @@ storm/
         artifact-contract.md
         classic-storm.md
         co-storm.md
+        co-storm-turn.schema.json
         local-runner.md
         run-state.schema.json
         safety-contract.md
@@ -39,6 +49,10 @@ storm/
 - `skills/storm/SKILL.md` is the skill entry point and activation contract.
 - `skills/storm/references/` contains mode-specific procedures and contracts; `storm-method.md` is the compatibility index.
 - `skills/storm/agents/openai.yaml` contains display metadata for OpenAI-style agent surfaces.
+- `assets/social-preview.png` is the upload-ready repository social preview.
+- `examples/` contains the Classic artifact bundle and prompt-native Co-STORM examples.
+- `evals/cases.json` defines executable behavior cases; `evals/baseline-results.json` preserves the historical pre-runtime B0 behavior snapshot rather than current canary results.
+- `scripts/run_forward_evals.py` runs isolated forward-eval canaries, and `scripts/validate_skill.py` enforces the repository contract.
 - `README.md` is user-facing installation and usage documentation.
 
 ## Development Guidelines
@@ -49,8 +63,10 @@ storm/
   - `storm_gen_outline`
   - `storm_gen_article`
   - `storm_gen_article_polished`
-- If no format is specified, the default output format is HTML.
-- If no output path is specified, artifacts should go under `.results/<topic-slug>/`.
+- For Classic, corpus-restricted, and Local Runner file-producing work, use the guarded HTML contract under `.results/<topic-slug>/`. For another Classic format, offer validated HTML or chat-only fallback and disclose the reduced enforcement boundary.
+- Keep Classic phase outputs under `.storm-run/staging`; only the `completed` transition may publish the four validated files and remove staging.
+- Keep Co-STORM conversation-first: return its final report in chat unless the user explicitly requests files. Write only the requested Co-STORM artifacts, and default to HTML under `.results/<topic-slug>/` only when a file request omits both format and destination.
+- For persistent Co-STORM runs, route every warm-start, interactive, and conclusion turn through `storm_state.py record-turn`; never hand-edit `co-storm-turns.jsonl` or claim that the Classic validator checked Co-STORM report contents.
 - Keep the display topic separate from filesystem slugs, especially for non-English topics.
 - Prefer source-grounded, citation-aware research behavior over generic summarization.
 - Describe Co-STORM as a prompt-native preview because the repository still does not bundle the upstream runner or independently running expert agents.
@@ -68,9 +84,11 @@ python scripts/run_forward_evals.py --repetitions 10 --output .results/forward-e
 npx -y skills@1.5.15 add . --list
 npx -y skills@1.5.15 use . --skill storm
 git diff --check
+empty_tree="$(git hash-object -t tree /dev/null)"
+git diff --check "$empty_tree" HEAD
 ```
 
-The validator checks metadata shape, bundle references, UI field lengths, UTF-8 hygiene, safety contracts, and the executable schema/category coverage of `evals/cases.json`. The forward-eval command runs every case in an isolated subprocess, evaluates state/artifacts/trace independently of the candidate self-report, and writes reviewable traces. Its built-in fixture adapter is a deterministic contract canary, not proof of model quality; an explicitly configured real-Agent command remains a non-blocking canary. The pinned CLI command is the release gate; CI also runs `skills@latest` and the offline forward eval as non-blocking compatibility canaries.
+The validator checks metadata shape, bundle references, UI field lengths, UTF-8 hygiene, safety contracts, and the executable schema/category coverage of `evals/cases.json`. The forward-eval command runs every case in an isolated subprocess, evaluates state/artifacts/trace independently of the candidate self-report, and writes reviewable traces. Its built-in fixture adapter is a deterministic contract canary, not proof of model quality; an explicitly configured real-Agent command remains a non-blocking canary. Pinned CLI discovery and rendering are blocking release gates. Public owner/repository discovery through `skills@latest` is also a blocking public-install gate; the offline forward eval and the separate local `skills@latest` discover/render job remain non-blocking compatibility canaries.
 
 For substantial behavior changes, forward-test at least one relevant case from `evals/cases.json` in a fresh agent context. Do not give the test agent the expected answer or the implementation diagnosis.
 
@@ -80,11 +98,12 @@ For maintainers preparing a release:
 
 1. Choose the Git tag as the release version; do not add a top-level `version` field to `SKILL.md`.
 2. Run all validation commands from a clean checkout.
-3. Confirm the public install command discovers `storm` and includes the full bundle.
-4. Review the behavior cases and document any known gaps in the release notes.
-5. Commit with a clear English message and create an annotated Git tag.
-6. Push only after explicit approval to publish.
-7. Create a GitHub Release for the approved tag and mark it as latest when appropriate.
+3. Confirm README, CONTRIBUTING, examples, repository URLs, install commands, and Pages links match the current behavior and repository name.
+4. Confirm `npx skills add lizhouai/storm-research-skill` discovers `storm` and includes the full bundle.
+5. Review the behavior cases and document any known gaps in the release notes.
+6. Commit with a clear English message and create an annotated Git tag.
+7. Push only after explicit approval to publish.
+8. Create a GitHub Release for the approved tag and mark it as latest when appropriate.
 
 ## Pull Requests
 

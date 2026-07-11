@@ -337,6 +337,7 @@ def run_checked(command: list[str], cwd: Path) -> dict[str, Any]:
 
 def copy_classic_fixture(candidate: Path, event: str) -> None:
     control = candidate / ".storm-run"
+    staging = control / "staging"
     names = {
         "perspectives_ready": ("perspectives.json",),
         "interviews_completed": ("retrieval-log.jsonl", "interviews.jsonl"),
@@ -349,7 +350,7 @@ def copy_classic_fixture(candidate: Path, event: str) -> None:
     }.get(event, ())
     for name in names:
         destination = (
-            control / name if name.endswith((".json", ".jsonl")) else candidate / name
+            control / name if name.endswith((".json", ".jsonl")) else staging / name
         )
         shutil.copyfile(CLASSIC_FIXTURES / name, destination)
 
@@ -388,16 +389,20 @@ def run_guarded_classic_fixture(
         copy_classic_fixture(candidate, event)
         if event == "verified":
             control = candidate / ".storm-run"
+            staging = control / "staging"
             run_checked(
                 [
                     sys.executable,
                     str(CITATION_CLI),
                     "--article",
-                    str(candidate / "storm_gen_article_polished.html"),
+                    str(staging / "storm_gen_article_polished.html"),
                     "--sources",
                     str(control / "sources.json"),
                     "--claims",
                     str(control / "claim-support.json"),
+                    "--run",
+                    str(run_path),
+                    "--staging",
                 ],
                 candidate,
             )
@@ -410,6 +415,7 @@ def run_guarded_classic_fixture(
                     case["prompt"],
                     "--run",
                     str(run_path),
+                    "--staging",
                 ],
                 candidate,
             )

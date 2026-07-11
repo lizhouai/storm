@@ -149,6 +149,7 @@ def validate_artifacts(
     *,
     topic: str | None = None,
     run_path: str | Path | None = None,
+    staging: bool = False,
 ) -> dict[str, Any]:
     """Validate four HTML artifacts and return their SHA-256 hashes."""
 
@@ -163,8 +164,20 @@ def validate_artifacts(
             "artifacts": {},
         }
 
+    artifact_root = root / ".storm-run" / "staging" if staging else root
+    if artifact_root.is_symlink() or not artifact_root.is_dir():
+        return {
+            "valid": False,
+            "errors": ["artifact directory must be an existing non-symlink directory"],
+            "artifacts": {},
+        }
+
     expected = set(PUBLIC_ARTIFACT_NAMES)
-    actual = {entry.name for entry in root.iterdir() if entry.name != ".storm-run"}
+    actual = {
+        entry.name
+        for entry in artifact_root.iterdir()
+        if staging or entry.name != ".storm-run"
+    }
     if actual != expected:
         missing = sorted(expected - actual)
         extra = sorted(actual - expected)
@@ -199,8 +212,12 @@ def validate_artifacts(
         resolved_topic = state["topic"]
 
     for name in PUBLIC_ARTIFACT_NAMES:
-        path = root / name
-        if path.is_symlink() or not path.is_file() or path.parent.resolve() != root.resolve():
+        path = artifact_root / name
+        if (
+            path.is_symlink()
+            or not path.is_file()
+            or path.parent.resolve() != artifact_root.resolve()
+        ):
             errors.append(f"{name}: artifact must be a direct non-symlink file")
             continue
         try:
@@ -295,6 +312,11 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--format", default="html", choices=("html",))
     parser.add_argument("--topic", help="Display topic used to reject duplicate outline headings")
     parser.add_argument("--run", dest="run_path", help="In-scope .storm-run/run.json to update")
+    parser.add_argument(
+        "--staging",
+        action="store_true",
+        help="validate .storm-run/staging while keeping run.json rooted in output_dir",
+    )
     return parser
 
 
@@ -304,6 +326,7 @@ def main(argv: list[str] | None = None) -> int:
         args.output_dir,
         topic=args.topic,
         run_path=args.run_path,
+        staging=args.staging,
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0 if report["valid"] else 1

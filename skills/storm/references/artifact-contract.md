@@ -5,14 +5,17 @@
 Normal non-interactive research publishes exactly these four files under the
 resolved output directory:
 
-1. `direct_gen_outline.<format>`
-2. `storm_gen_outline.<format>`
-3. `storm_gen_article.<format>`
-4. `storm_gen_article_polished.<format>`
+1. `direct_gen_outline.html`
+2. `storm_gen_outline.html`
+3. `storm_gen_article.html`
+4. `storm_gen_article_polished.html`
 
-Default to HTML under `.results/<topic-slug>/`. Internal state, event logs,
-retrieval traces, information tables, and audits belong in `.storm-run/` and do
-not count as additional public deliverables.
+The guarded publication path supports HTML only and defaults to
+`.results/<topic-slug>/`. If the user requests another Classic file format,
+offer the validated HTML bundle or chat-only fallback and disclose that the
+non-HTML output would not pass the guarded artifact gate. Internal state, event
+logs, retrieval traces, information tables, and audits belong in `.storm-run/`
+and do not count as additional public deliverables.
 
 ## Structural Gates
 
@@ -41,7 +44,11 @@ not count as additional public deliverables.
 
 Never silently overwrite existing output. Resolve a new run-specific sibling or
 obtain explicit current authorization. Write into a same-filesystem staging
-directory, close files, validate the complete set, calculate SHA-256 hashes,
-then atomically rename or replace only the newly allocated destination. A
-failure leaves the last valid public output untouched and reports any retained
-staging path.
+directory at `.storm-run/staging`, close files, validate the complete set,
+calculate SHA-256 hashes,
+then advance the guarded lifecycle. The Classic `completed` transition performs
+a same-filesystem temporary-file plus `os.replace` publication for every
+validated artifact and atomically writes `.storm-run/publication.json` with the
+published SHA-256 values. COMPLETE runs fail validation if that receipt is
+missing or disagrees with run state. A failure leaves the last valid public
+output untouched and reports any retained staging path.

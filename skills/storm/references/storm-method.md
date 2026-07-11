@@ -10,6 +10,7 @@ open this file, but should then follow only the relevant links:
 - Four public files, staging, HTML, UTF-8, and citation gates: `artifact-contract.md`
 - Retrieval, checkpoint, runner, and side-effect safety: `safety-contract.md`
 - Versioned guarded run state: `run-state.schema.json`
+- Persisted Co-STORM turn input: `co-storm-turn.schema.json`
 
 The public entry point remains `../SKILL.md`. This compatibility index does not
 define a second mode or installation target.

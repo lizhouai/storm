@@ -57,13 +57,7 @@ Ask your agent to use the `storm` skill. In Codex, you can call it explicitly:
 $storm Research the current state of AI code review tools.
 ```
 
-By default this creates the standard HTML artifact bundle under `.results/<topic-slug>/`. See [Output Format](#output-format).
-
-To use another format, ask for it explicitly:
-
-```text
-$storm Research RAG technology and output markdown format
-```
+By default this creates the standard HTML artifact bundle under `.results/<topic-slug>/`. The guarded Classic publication path currently validates HTML only; for another format, use chat-only output and accept the reduced mechanical enforcement boundary. See [Output Format](#output-format).
 
 General agent prompt:
 
@@ -77,7 +71,7 @@ Prompt-native Co-STORM preview:
 Use the prompt-native Co-STORM preview to explore commercial paths for embodied AI. Start with a roundtable and maintain a mind-map style structure.
 ```
 
-In the Co-STORM preview, the agent keeps a conversation-local board with a cited mind map, discourse history, participants, open questions, sources, unused evidence, and current focus. The simulated participants are visible in the response: the warm start gives each active expert a labeled contribution and a moderator handoff, while later turns show a named primary speaker plus a distinct respondent and periodic moderator intervention. Choice-first steering keeps the user in control. Compact checkpoints make the board recoverable when the host preserves conversation state; if state or citation mappings are lost, the agent must disclose the gap and rebuild them before continuing.
+In the Co-STORM preview, the agent keeps a conversation-local board with a cited mind map, discourse history, participants, open questions, sources, unused evidence, and current focus. The simulated participants are visible in the response: the warm start gives each active expert a labeled contribution and a moderator handoff, while later turns show a named primary speaker plus a distinct respondent and periodic moderator intervention. Choice-first steering keeps the user in control. When persistence is explicitly requested, the guarded state CLI records schema-checked turns in an atomic hash-linked log; ordinary conversation mode remains prompt-only. If state or citation mappings are lost, the agent must disclose the gap and rebuild them before continuing.
 
 ### Ending a Co-STORM Roundtable
 
@@ -96,7 +90,8 @@ Conclude the Co-STORM roundtable and save the cited mind map and final report as
 ```
 
 Without an explicit file request, the final report remains in the conversation.
-With one, the skill writes the two files described in [Output Format](#output-format).
+With one, the skill writes the requested one or both Co-STORM artifacts described
+in [Output Format](#output-format).
 
 Local-document constrained research:
 
@@ -106,7 +101,7 @@ Use storm to synthesize the documents in this repository. Restrict retrieval to 
 
 ## Output Format
 
-Unless you request another format, the skill produces a standard STORM artifact bundle in HTML under `.results/<topic-slug>/`:
+Guarded Classic research produces this standard HTML artifact bundle under `.results/<topic-slug>/`:
 
 - `direct_gen_outline.html`: topic-only outline before evidence refinement
 - `storm_gen_outline.html`: evidence-refined outline
@@ -114,6 +109,9 @@ Unless you request another format, the skill produces a standard STORM artifact 
 - `storm_gen_article_polished.html`: polished final article with references and verification notes
 
 If you explicitly ask for chat-only or no files, the skill can instead return a compact in-chat brief with perspectives, query log, citations, references, and verification notes.
+
+The guarded Classic artifact validator does not accept non-HTML files. Do not
+claim guarded completion for another Classic file format.
 
 The Co-STORM preview is conversation-first and never creates the four Classic
 STORM files. Without an explicit file request, its final report remains in the
@@ -161,16 +159,21 @@ File-producing Classic and Local Runner requests default to the bundled guarded
 runtime when Python is available. A versioned `.storm-run/run.json` and event
 log define the only next action; zero-dependency scripts enforce state
 transitions, artifact structure, hashes, and citation mappings before the run
-can reach `COMPLETE`. Prompt-only fallback remains available when Python is
+can reach `COMPLETE`. Phase outputs remain under `.storm-run/staging`, so the
+four public files stay absent before validation. The final transition atomically replaces the validated
+artifact bytes and records their hashes in `.storm-run/publication.json`;
+completed runs revalidate that receipt. Prompt-only fallback remains available when Python is
 unavailable or the user explicitly requests chat-only output, with the reduced
 enforcement boundary stated in the response.
 
-The prompt-native Co-STORM preview is used only when you explicitly ask for interactive exploration, roundtable discussion, user steering, or a mind map. It starts with a mini STORM warm start, renders role-attributed simulated discussion instead of hiding participants in internal state, maintains a cited mind map and checkpoint during the conversation, and writes the final report when you ask to conclude. The Co-STORM reference describes the portable prompt protocol, but this repository does not bundle DSPy modules, independently running expert agents, or an executable Co-STORM runner.
+The prompt-native Co-STORM preview is used only when you explicitly ask for interactive exploration, roundtable discussion, user steering, or a mind map. It starts with a mini STORM warm start, renders role-attributed simulated discussion instead of hiding participants in internal state, maintains a cited mind map during the conversation, and returns the final report in chat or writes only requested artifacts when you ask to conclude. The Co-STORM reference describes the portable prompt protocol, but this repository does not bundle DSPy modules, independently running expert agents, or an executable Co-STORM runner.
 
-For persistent Co-STORM runs, the guarded state CLI protects outer lifecycle
-transitions and checkpoint integrity. The bundled Classic artifact validator
-does not mechanically verify Co-STORM mind-map or report contents; the agent
-must still review their source and citation support before claiming completion.
+For persistent Co-STORM runs, `record-turn` validates turn order, stable
+participant identities, retrieval/source mappings, citations, mind-map delta
+shape, final-report intent, and a hash-linked turn log before outer lifecycle
+transitions. The bundled Classic artifact validator does not mechanically
+verify Co-STORM mind-map or report contents; the agent must still review their
+source and citation support before claiming completion.
 
 ### Co-STORM Interaction Flow
 
@@ -188,10 +191,10 @@ flowchart TD
     I --> J["Update discourse, citations, mind-map delta, and open questions"]
     J --> E
 
-    F -->|"Save, resume, or hand off"| K["Validate and write a compact checkpoint"]
+    F -->|"Save, resume, or hand off"| K["Export the visible board<br/>Persisted runs retain the validated turn log"]
     K --> E
 
-    F -->|"Conclude"| L["Synthesize selected branches, disagreements, and uncertainties"]
+    F -->|"Conclude"| L["Record the final turn when persistent<br/>Synthesize branches and disagreements"]
     L --> M["Return the final report<br/>Write files only when requested"]
 
     N["Interactive rounds have no fixed limit"] -.-> E
@@ -211,6 +214,7 @@ storm-research-skill/
   assets/
     social-preview.png
   evals/
+    baseline-results.json
     cases.json
   examples/
     README.md
@@ -230,6 +234,7 @@ storm-research-skill/
         artifact-contract.md
         classic-storm.md
         co-storm.md
+        co-storm-turn.schema.json
         local-runner.md
         run-state.schema.json
         safety-contract.md
@@ -245,6 +250,7 @@ storm-research-skill/
 - `skills/storm/agents/openai.yaml` provides display metadata for OpenAI-style agent surfaces.
 - `assets/social-preview.png` is the upload-ready repository social preview; the `Fact Researcher` label is visual shorthand for the canonical Basic fact writer role.
 - `examples/` contains a complete Classic artifact bundle, a compact prompt-native Co-STORM interaction, and an end-to-end Co-STORM report run.
+- `evals/baseline-results.json` preserves the historical pre-runtime B0 behavior snapshot; it is not the current executable-canary result.
 - `evals/cases.json` defines executable forward-eval cases and objective oracle assertions for critical modes and safety boundaries.
 - `scripts/run_forward_evals.py` runs isolated offline contract canaries and can invoke an explicitly configured real-Agent command without making that nondeterministic path a release gate.
 - `scripts/validate_skill.py` enforces the repository contract without third-party Python dependencies.
@@ -283,8 +289,13 @@ Run the repository checks and validate local discovery:
 
 ```bash
 python scripts/validate_skill.py
+python -m unittest discover -s tests -p "test_*.py"
 python scripts/run_forward_evals.py --repetitions 10 --output .results/forward-evals --replace
-npx skills add . --list
+npx -y skills@1.5.15 add . --list
+npx -y skills@1.5.15 use . --skill storm
+git diff --check
+empty_tree="$(git hash-object -t tree /dev/null)"
+git diff --check "$empty_tree" HEAD
 ```
 
 Install your local working copy while developing:

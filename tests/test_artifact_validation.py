@@ -167,7 +167,6 @@ class ArtifactValidationTests(unittest.TestCase):
     def test_valid_hashes_are_merged_atomically_into_in_scope_run_state(self):
         with tempfile.TemporaryDirectory() as directory:
             output_dir = Path(directory)
-            self._write_valid_bundle(output_dir)
             state_cli = SCRIPTS_DIR / "storm_state.py"
             initialized = subprocess.run(
                 [
@@ -188,9 +187,10 @@ class ArtifactValidationTests(unittest.TestCase):
             self.assertEqual(initialized.returncode, 0, initialized.stderr)
             control_dir = output_dir / ".storm-run"
             run_path = control_dir / "run.json"
+            self._write_valid_bundle(control_dir / "staging")
             original = json.loads(run_path.read_text(encoding="utf-8"))
 
-            report = validate_artifacts(output_dir, run_path=run_path)
+            report = validate_artifacts(output_dir, run_path=run_path, staging=True)
 
             self.assertTrue(report["valid"])
             updated = json.loads(run_path.read_text(encoding="utf-8"))

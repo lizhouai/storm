@@ -188,7 +188,7 @@ class FakeClassicRunTests(unittest.TestCase):
             self.stage_evidence(output, event)
             if event == "verified":
                 self.run_citation_audit(output)
-                self.validate_bundle(output)
+                self.validate_bundle(output, staging=True)
             state = self.state_command(output, "advance", "--event", event)
             if resulting_phase == target_phase:
                 return state
@@ -207,7 +207,11 @@ class FakeClassicRunTests(unittest.TestCase):
             "verified": ("sources.json", "claim-support.json"),
         }.get(event, ())
         for name in fixture_names:
-            destination = control / name if name.endswith((".json", ".jsonl")) else output / name
+            destination = (
+                control / name
+                if name.endswith((".json", ".jsonl"))
+                else control / "staging" / name
+            )
             shutil.copyfile(FIXTURES / name, destination)
 
     def run_citation_audit(self, output: Path) -> dict[str, object]:
@@ -216,15 +220,21 @@ class FakeClassicRunTests(unittest.TestCase):
             self.run_python(
                 CITATION_CLI,
                 "--article",
-                str(output / "storm_gen_article_polished.html"),
+                str(control / "staging" / "storm_gen_article_polished.html"),
                 "--sources",
                 str(control / "sources.json"),
                 "--claims",
                 str(control / "claim-support.json"),
+                "--run",
+                str(self.run_path(output)),
+                "--staging",
             ).stdout
         )
 
-    def validate_bundle(self, output: Path) -> dict[str, object]:
+    def validate_bundle(
+        self, output: Path, *, staging: bool = False
+    ) -> dict[str, object]:
+        extra_args = ("--staging",) if staging else ()
         return json.loads(
             self.run_python(
                 ARTIFACT_CLI,
@@ -233,6 +243,7 @@ class FakeClassicRunTests(unittest.TestCase):
                 "Deterministic RAG evaluation",
                 "--run",
                 str(self.run_path(output)),
+                *extra_args,
             ).stdout
         )
 

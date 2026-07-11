@@ -11,6 +11,10 @@ the upstream `CoStormRunner`.
 - [Open the rendered HTML report](https://lizhouai.github.io/storm-research-skill/examples/co-storm-rag-technology/rag-technology-research-report.html)
 - [View the checked-in HTML source](rag-technology-research-report.html)
 
+The checked-in Pages snapshot uses a descriptive publication filename. A
+standard Co-STORM file-producing run writes this requested report as
+`co_storm_report.html` unless the user explicitly chooses another name.
+
 The report covers production RAG architecture, Chunking, Hybrid Retrieval,
 Reranker design, advanced RAG boundaries, evaluation, security, and an
 implementation roadmap. It cites 20 papers or official technical sources.

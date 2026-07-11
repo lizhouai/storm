@@ -94,6 +94,55 @@ TRANSITIONS = {
         "VERIFIED": ("completed", "COMPLETE"),
     },
 }
+CO_STORM_TURN_PAYLOAD_FIELDS = {
+    "turn_id",
+    "input_event",
+    "policy",
+    "participants",
+    "retrieval_records",
+    "mind_map_delta",
+    "citations",
+    "next_actions",
+}
+CO_STORM_TURN_ENTRY_FIELDS = CO_STORM_TURN_PAYLOAD_FIELDS | {
+    "run_id",
+    "phase",
+    "timestamp",
+    "previous_turn_hash",
+    "turn_hash",
+}
+CO_STORM_INPUT_EVENTS = {
+    "USER_ASK",
+    "USER_STEER",
+    "USER_OBSERVE",
+    "EXPERT_ANSWER",
+    "SPECIALIST_RESPOND",
+    "MODERATOR_BROADEN",
+    "USER_CONCLUDE",
+}
+CO_STORM_POLICIES = {
+    "QUESTION_ANSWERING",
+    "QUESTION_ASKING",
+    "MODERATOR_BROADENING",
+    "FINAL_REPORT",
+}
+CO_STORM_RECORDABLE_PHASES = {
+    "WARM_START_RUNNING",
+    "INTERACTIVE",
+}
+ZERO_HASH = "0" * 64
+CLASSIC_ARTIFACT_BASE_NAMES = (
+    "direct_gen_outline",
+    "storm_gen_outline",
+    "storm_gen_article",
+    "storm_gen_article_polished",
+)
+PUBLICATION_FIELDS = {
+    "schema_version",
+    "run_id",
+    "published_at",
+    "artifact_hashes",
+}
 
 
 class StateError(ValueError):
@@ -132,6 +181,27 @@ def atomic_write_text(path: Path, text: str) -> None:
         ) as handle:
             temporary_path = Path(handle.name)
             handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary_path, path)
+        temporary_path = None
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
+
+
+def atomic_replace_bytes(path: Path, content: bytes) -> None:
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="wb",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as handle:
+            temporary_path = Path(handle.name)
+            handle.write(content)
             handle.flush()
             os.fsync(handle.fileno())
         os.replace(temporary_path, path)
@@ -244,6 +314,205 @@ def read_json(path: Path, label: str) -> Any:
         raise StateError(f"{label} is not strict UTF-8: {path}") from error
     except json.JSONDecodeError as error:
         raise StateError(f"{label} is not valid JSON: {path}: {error.msg}") from error
+
+
+def require_non_empty_string(value: Any, label: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise StateError(f"{label} must be a non-empty string")
+    return value
+
+
+def validate_co_storm_turn_payload(
+    payload: Any,
+    *,
+    expected_turn_id: int,
+    participant_registry: dict[str, tuple[str, str]],
+    known_source_ids: set[str],
+) -> dict[str, Any]:
+    if not isinstance(payload, dict) or set(payload) != CO_STORM_TURN_PAYLOAD_FIELDS:
+        raise StateError("Co-STORM turn payload fields are invalid")
+    turn_id = payload["turn_id"]
+    if (
+        isinstance(turn_id, bool)
+        or not isinstance(turn_id, int)
+        or turn_id != expected_turn_id
+    ):
+        raise StateError(f"Co-STORM turn_id must be {expected_turn_id}")
+    input_event = payload["input_event"]
+    if input_event not in CO_STORM_INPUT_EVENTS:
+        raise StateError(f"unknown Co-STORM input_event: {input_event!r}")
+    policy = payload["policy"]
+    if policy not in CO_STORM_POLICIES:
+        raise StateError(f"unknown Co-STORM policy: {policy!r}")
+
+    participants = payload["participants"]
+    if not isinstance(participants, list) or not participants:
+        raise StateError("Co-STORM participants must be a non-empty array")
+    turn_participant_ids: set[str] = set()
+    for index, participant in enumerate(participants):
+        if not isinstance(participant, dict) or set(participant) != {
+            "id",
+            "display_name",
+            "role",
+        }:
+            raise StateError(f"Co-STORM participant {index} fields are invalid")
+        participant_id = require_non_empty_string(
+            participant["id"], f"Co-STORM participant {index} id"
+        )
+        display_name = require_non_empty_string(
+            participant["display_name"],
+            f"Co-STORM participant {index} display_name",
+        )
+        role = require_non_empty_string(
+            participant["role"], f"Co-STORM participant {index} role"
+        )
+        if participant_id in turn_participant_ids:
+            raise StateError("Co-STORM participant ids must be unique per turn")
+        turn_participant_ids.add(participant_id)
+        identity = (display_name, role)
+        if participant_id in participant_registry and participant_registry[participant_id] != identity:
+            raise StateError(
+                f"Co-STORM participant identity changed for id {participant_id!r}"
+            )
+        participant_registry[participant_id] = identity
+    if expected_turn_id == 1 and not any(
+        participant["role"].casefold() == "moderator" for participant in participants
+    ):
+        raise StateError("the persisted Co-STORM warm start must include Moderator")
+
+    retrieval_records = payload["retrieval_records"]
+    if not isinstance(retrieval_records, list):
+        raise StateError("Co-STORM retrieval_records must be an array")
+    for index, record in enumerate(retrieval_records):
+        if not isinstance(record, dict) or set(record) != {"query", "source_ids"}:
+            raise StateError(f"Co-STORM retrieval record {index} fields are invalid")
+        require_non_empty_string(record["query"], f"Co-STORM retrieval record {index} query")
+        source_ids = record["source_ids"]
+        if not isinstance(source_ids, list) or not source_ids:
+            raise StateError(
+                f"Co-STORM retrieval record {index} source_ids must be non-empty"
+            )
+        for source_id in source_ids:
+            known_source_ids.add(
+                require_non_empty_string(source_id, "Co-STORM retrieval source id")
+            )
+
+    mind_map_delta = payload["mind_map_delta"]
+    if not isinstance(mind_map_delta, dict) or set(mind_map_delta) != {
+        "added",
+        "updated",
+        "removed",
+    }:
+        raise StateError("Co-STORM mind_map_delta fields are invalid")
+    for action in ("added", "updated", "removed"):
+        values = mind_map_delta[action]
+        if not isinstance(values, list) or not all(
+            (isinstance(value, str) and bool(value.strip())) or isinstance(value, dict)
+            for value in values
+        ):
+            raise StateError(f"Co-STORM mind_map_delta.{action} must be an array")
+
+    citations = payload["citations"]
+    if not isinstance(citations, list) or not citations:
+        raise StateError("Co-STORM citations must be a non-empty array")
+    citation_ids: set[int] = set()
+    for index, citation in enumerate(citations):
+        if not isinstance(citation, dict) or set(citation) != {
+            "citation_id",
+            "source_id",
+        }:
+            raise StateError(f"Co-STORM citation {index} fields are invalid")
+        citation_id = citation["citation_id"]
+        if isinstance(citation_id, bool) or not isinstance(citation_id, int) or citation_id < 1:
+            raise StateError("Co-STORM citation ids must be positive integers")
+        if citation_id in citation_ids:
+            raise StateError("Co-STORM citation ids must be unique per turn")
+        citation_ids.add(citation_id)
+        source_id = require_non_empty_string(
+            citation["source_id"], f"Co-STORM citation {index} source_id"
+        )
+        if source_id not in known_source_ids:
+            raise StateError(f"Co-STORM citation source is unknown: {source_id!r}")
+
+    next_actions = payload["next_actions"]
+    if not isinstance(next_actions, list) or not all(
+        isinstance(action, str) and bool(action.strip()) for action in next_actions
+    ):
+        raise StateError("Co-STORM next_actions must be an array of non-empty strings")
+    if policy == "FINAL_REPORT":
+        if input_event != "USER_CONCLUDE" or next_actions:
+            raise StateError(
+                "FINAL_REPORT requires USER_CONCLUDE and no remaining next_actions"
+            )
+    elif not next_actions:
+        raise StateError("non-final Co-STORM turns require at least one next action")
+    return payload
+
+
+def load_co_storm_turns(
+    run_path: Path, state: dict[str, Any], *, required: bool = False
+) -> list[dict[str, Any]]:
+    turn_log_path = run_path.parent / "co-storm-turns.jsonl"
+    if turn_log_path.is_symlink():
+        raise StateError("Co-STORM turn log must not be a symlink")
+    if not turn_log_path.exists():
+        if required:
+            raise StateError("a persisted Co-STORM warm-start turn is required")
+        return []
+    try:
+        lines = turn_log_path.read_text(encoding="utf-8").splitlines()
+    except UnicodeDecodeError as error:
+        raise StateError("Co-STORM turn log is not strict UTF-8") from error
+    if not lines:
+        raise StateError("Co-STORM turn log must not be empty")
+    entries: list[dict[str, Any]] = []
+    participant_registry: dict[str, tuple[str, str]] = {}
+    known_source_ids: set[str] = set()
+    previous_turn_hash = ZERO_HASH
+    for expected_turn_id, line in enumerate(lines, start=1):
+        if not line.strip():
+            raise StateError(
+                f"Co-STORM turn log contains a blank line at {expected_turn_id}"
+            )
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError as error:
+            raise StateError(
+                f"Co-STORM turn log line {expected_turn_id} is invalid JSON"
+            ) from error
+        if not isinstance(entry, dict) or set(entry) != CO_STORM_TURN_ENTRY_FIELDS:
+            raise StateError(f"Co-STORM turn {expected_turn_id} fields are invalid")
+        if entry.get("run_id") != state["run_id"]:
+            raise StateError(f"Co-STORM turn {expected_turn_id} has the wrong run_id")
+        if entry.get("phase") not in CO_STORM_RECORDABLE_PHASES:
+            raise StateError(f"Co-STORM turn {expected_turn_id} has an invalid phase")
+        parse_timestamp(entry.get("timestamp"), f"Co-STORM turn {expected_turn_id} timestamp")
+        if entry.get("previous_turn_hash") != previous_turn_hash:
+            raise StateError(f"Co-STORM turn {expected_turn_id} breaks the hash chain")
+        turn_hash = entry.get("turn_hash")
+        unhashed_entry = {key: value for key, value in entry.items() if key != "turn_hash"}
+        if turn_hash != content_hash(unhashed_entry):
+            raise StateError(f"Co-STORM turn {expected_turn_id} has an invalid turn_hash")
+        validate_co_storm_turn_payload(
+            {key: entry[key] for key in CO_STORM_TURN_PAYLOAD_FIELDS},
+            expected_turn_id=expected_turn_id,
+            participant_registry=participant_registry,
+            known_source_ids=known_source_ids,
+        )
+        entries.append(entry)
+        previous_turn_hash = turn_hash
+    return entries
+
+
+def co_storm_turn_summary(
+    state: dict[str, Any], entries: Sequence[dict[str, Any]]
+) -> dict[str, Any]:
+    return {
+        "valid": True,
+        "run_id": state["run_id"],
+        "turn_count": len(entries),
+        "latest_turn_hash": entries[-1]["turn_hash"] if entries else None,
+    }
 
 
 def read_event_log(path: Path) -> list[dict[str, Any]]:
@@ -391,6 +660,20 @@ def load_guarded_run(run_path: Path) -> tuple[dict[str, Any], list[dict[str, Any
             or pending.get("before_state_hash") != content_hash(state)
         ):
             raise StateError("event log contains an invalid uncommitted event")
+    if state["mode"] == "co-storm":
+        load_co_storm_turns(
+            run_path,
+            state,
+            required=state["phase"] in {"INTERACTIVE", "REPORTING", "VERIFIED", "COMPLETE"},
+        )
+    if state["mode"] == "classic":
+        if state["phase"] == "COMPLETE":
+            require_validated_classic_artifacts(
+                run_path, state, CLASSIC_ARTIFACT_BASE_NAMES, published=True
+            )
+        validate_classic_publication_receipt(
+            run_path, state, required=state["phase"] == "COMPLETE"
+        )
     return state, committed_events
 
 
@@ -400,12 +683,83 @@ def status_run(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def validate_run(args: argparse.Namespace) -> dict[str, Any]:
-    state, _ = load_guarded_run(Path(args.run).resolve())
+    run_path = Path(args.run).resolve()
+    state, _ = load_guarded_run(run_path)
+    if state["mode"] == "co-storm":
+        return co_storm_turn_summary(state, load_co_storm_turns(run_path, state))
     return {"valid": True, "run_id": state["run_id"]}
 
 
 def event_key(command: str, payload: dict[str, Any]) -> str:
     return content_hash({"command": command, "payload": payload})
+
+
+def record_co_storm_turn(args: argparse.Namespace) -> dict[str, Any]:
+    run_path = Path(args.run).resolve()
+    state, _ = load_guarded_run(run_path)
+    if state["mode"] != "co-storm":
+        raise StateError("record-turn is available only for Co-STORM runs")
+    if state["status"] != "running" or state["phase"] not in CO_STORM_RECORDABLE_PHASES:
+        raise StateError(
+            f"cannot record a Co-STORM turn in phase/status {state['phase']!r}/{state['status']!r}"
+        )
+    payload_candidate = Path(args.turn)
+    if payload_candidate.is_symlink():
+        raise StateError("Co-STORM turn input must not be a symlink")
+    payload_path = payload_candidate.resolve()
+    if payload_path.parent != run_path.parent or not payload_path.is_file():
+        raise StateError("Co-STORM turn input must be a direct file in .storm-run")
+    payload = read_json(payload_path, "Co-STORM turn input")
+    entries = load_co_storm_turns(run_path, state)
+    if isinstance(payload, dict) and set(payload) == CO_STORM_TURN_PAYLOAD_FIELDS:
+        turn_id = payload.get("turn_id")
+        if (
+            isinstance(turn_id, int)
+            and not isinstance(turn_id, bool)
+            and 1 <= turn_id <= len(entries)
+        ):
+            existing_payload = {
+                key: entries[turn_id - 1][key] for key in CO_STORM_TURN_PAYLOAD_FIELDS
+            }
+            if payload == existing_payload:
+                return co_storm_turn_summary(state, entries)
+            raise StateError(
+                f"Co-STORM turn {turn_id} is already recorded with different content"
+            )
+    participant_registry: dict[str, tuple[str, str]] = {}
+    known_source_ids: set[str] = set()
+    for expected_turn_id, entry in enumerate(entries, start=1):
+        validate_co_storm_turn_payload(
+            {key: entry[key] for key in CO_STORM_TURN_PAYLOAD_FIELDS},
+            expected_turn_id=expected_turn_id,
+            participant_registry=participant_registry,
+            known_source_ids=known_source_ids,
+        )
+    expected_turn_id = len(entries) + 1
+    validated_payload = validate_co_storm_turn_payload(
+        payload,
+        expected_turn_id=expected_turn_id,
+        participant_registry=participant_registry,
+        known_source_ids=known_source_ids,
+    )
+    if state["phase"] == "WARM_START_RUNNING" and (
+        validated_payload["input_event"] == "USER_CONCLUDE"
+        or validated_payload["policy"] == "FINAL_REPORT"
+    ):
+        raise StateError("the persisted Co-STORM warm start cannot be a final report")
+    entry = {
+        **validated_payload,
+        "run_id": state["run_id"],
+        "phase": state["phase"],
+        "timestamp": utc_now(),
+        "previous_turn_hash": entries[-1]["turn_hash"] if entries else ZERO_HASH,
+    }
+    entry["turn_hash"] = content_hash(entry)
+    turn_log_path = run_path.parent / "co-storm-turns.jsonl"
+    turn_log_text = "".join(canonical_json(item) + "\n" for item in [*entries, entry])
+    atomic_write_text(turn_log_path, turn_log_text)
+    recorded_entries = load_co_storm_turns(run_path, state, required=True)
+    return co_storm_turn_summary(state, recorded_entries)
 
 
 def load_perspectives(control_directory: Path) -> list[dict[str, Any]]:
@@ -531,8 +885,14 @@ def check_information_table(control_directory: Path) -> None:
         evidence_keys.add(key)
 
 
-def require_public_artifact(run_path: Path, base_name: str) -> Path:
-    output_directory = run_path.parent.parent
+def classic_artifact_directory(run_path: Path, *, published: bool) -> Path:
+    return run_path.parent.parent if published else run_path.parent / "staging"
+
+
+def require_public_artifact(
+    run_path: Path, base_name: str, *, published: bool = False
+) -> Path:
+    output_directory = classic_artifact_directory(run_path, published=published)
     candidates = [
         candidate
         for candidate in output_directory.glob(f"{base_name}.*")
@@ -545,6 +905,147 @@ def require_public_artifact(run_path: Path, base_name: str) -> Path:
     if candidates[0].stat().st_size == 0:
         raise StateError(f"public artifact is empty: {candidates[0]}")
     return candidates[0]
+
+
+def require_validated_classic_artifacts(
+    run_path: Path,
+    state: dict[str, Any],
+    base_names: Sequence[str],
+    *,
+    published: bool = False,
+) -> None:
+    expected_names = {f"{base_name}.html" for base_name in base_names}
+    if set(state["artifacts"]) != expected_names:
+        raise StateError(
+            "validated artifact metadata must contain exactly the four canonical HTML files"
+        )
+    output_directory = classic_artifact_directory(run_path, published=published)
+    for name in sorted(expected_names):
+        metadata = state["artifacts"].get(name)
+        if (
+            not isinstance(metadata, dict)
+            or metadata.get("path") != name
+            or metadata.get("format") != "html"
+            or not isinstance(metadata.get("sha256"), str)
+            or not re.fullmatch(r"[0-9a-f]{64}", metadata["sha256"])
+        ):
+            raise StateError(f"validated artifact metadata is invalid: {name}")
+        artifact_path = output_directory / name
+        if artifact_path.is_symlink() or not artifact_path.is_file():
+            raise StateError(f"validated public artifact is missing or unsafe: {name}")
+        actual_hash = hashlib.sha256(artifact_path.read_bytes()).hexdigest()
+        if actual_hash != metadata["sha256"]:
+            raise StateError(f"validated artifact hash does not match the file: {name}")
+
+
+def require_valid_citation_audit(run_path: Path) -> None:
+    citation_audit = read_json(
+        run_path.parent / "citation-audit.json", "citation-audit.json"
+    )
+    required_fields = {
+        "schema_version",
+        "valid",
+        "article",
+        "used_citation_ids",
+        "sources",
+        "claims",
+        "errors",
+    }
+    if not isinstance(citation_audit, dict) or set(citation_audit) != required_fields:
+        raise StateError("citation audit fields are invalid")
+    if (
+        citation_audit["schema_version"] != "1.0"
+        or citation_audit["valid"] is not True
+        or citation_audit["article"] != "storm_gen_article_polished.html"
+        or not isinstance(citation_audit["used_citation_ids"], list)
+        or not citation_audit["used_citation_ids"]
+        or not isinstance(citation_audit["sources"], list)
+        or not isinstance(citation_audit["claims"], list)
+        or citation_audit["errors"] != []
+    ):
+        raise StateError("citation audit must be valid before VERIFIED")
+
+
+def validate_classic_publication_receipt(
+    run_path: Path, state: dict[str, Any], *, required: bool
+) -> dict[str, Any] | None:
+    receipt_path = run_path.parent / "publication.json"
+    if receipt_path.is_symlink():
+        raise StateError("publication receipt must not be a symlink")
+    if not receipt_path.exists():
+        if required:
+            raise StateError("missing publication.json for a COMPLETE Classic run")
+        return None
+    receipt = read_json(receipt_path, "publication.json")
+    if not isinstance(receipt, dict) or set(receipt) != PUBLICATION_FIELDS:
+        raise StateError("publication.json fields are invalid")
+    if receipt["schema_version"] != 1 or receipt["run_id"] != state["run_id"]:
+        raise StateError("publication.json does not match the guarded run")
+    parse_timestamp(receipt["published_at"], "publication.json published_at")
+    if receipt["artifact_hashes"] != artifact_hashes(state):
+        raise StateError("publication.json artifact hashes do not match run state")
+    return receipt
+
+
+def publish_classic_artifacts(run_path: Path, state: dict[str, Any]) -> dict[str, Any]:
+    staging_directory = classic_artifact_directory(run_path, published=False)
+    output_directory = classic_artifact_directory(run_path, published=True)
+    receipt_path = run_path.parent / "publication.json"
+    existing_receipt = validate_classic_publication_receipt(
+        run_path, state, required=False
+    )
+    if existing_receipt is not None:
+        require_validated_classic_artifacts(
+            run_path, state, CLASSIC_ARTIFACT_BASE_NAMES, published=True
+        )
+        return existing_receipt
+
+    names_to_publish: list[str] = []
+    for name, metadata in state["artifacts"].items():
+        target = output_directory / name
+        if target.exists():
+            if target.is_symlink() or hashlib.sha256(target.read_bytes()).hexdigest() != metadata["sha256"]:
+                raise StateError(f"refusing to replace an unexpected public artifact: {name}")
+            continue
+        names_to_publish.append(name)
+
+    published_paths: list[Path] = []
+    try:
+        for name in sorted(names_to_publish):
+            staged_path = staging_directory / name
+            target = output_directory / name
+            atomic_replace_bytes(target, staged_path.read_bytes())
+            published_paths.append(target)
+        require_validated_classic_artifacts(
+            run_path, state, CLASSIC_ARTIFACT_BASE_NAMES, published=True
+        )
+        receipt = {
+            "schema_version": 1,
+            "run_id": state["run_id"],
+            "published_at": utc_now(),
+            "artifact_hashes": artifact_hashes(state),
+        }
+        atomic_write_text(
+            receipt_path,
+            json.dumps(receipt, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        )
+        validate_classic_publication_receipt(run_path, state, required=True)
+        return receipt
+    except (OSError, StateError) as error:
+        receipt_path.unlink(missing_ok=True)
+        for target in published_paths:
+            target.unlink(missing_ok=True)
+        raise StateError(f"atomic Classic publication failed: {error}") from error
+
+
+def cleanup_classic_staging(run_path: Path) -> None:
+    staging_directory = classic_artifact_directory(run_path, published=False)
+    for name in (f"{base_name}.html" for base_name in CLASSIC_ARTIFACT_BASE_NAMES):
+        (staging_directory / name).unlink(missing_ok=True)
+    try:
+        staging_directory.rmdir()
+    except FileNotFoundError:
+        pass
 
 
 def check_transition_prerequisites(
@@ -564,10 +1065,28 @@ def check_transition_prerequisites(
     }
     if state["mode"] == "classic" and event_name in classic_artifact_events:
         require_public_artifact(run_path, classic_artifact_events[event_name])
-    if state["mode"] == "classic" and event_name == "verified":
+    if state["mode"] == "classic" and event_name in {"verified", "completed"}:
         for base_name in classic_artifact_events.values():
             require_public_artifact(run_path, base_name)
-        read_json(run_path.parent / "citation-audit.json", "citation-audit.json")
+        require_valid_citation_audit(run_path)
+        require_validated_classic_artifacts(
+            run_path, state, tuple(classic_artifact_events.values())
+        )
+    if state["mode"] == "co-storm" and event_name == "warm_start_completed":
+        turns = load_co_storm_turns(run_path, state, required=True)
+        if turns[0]["phase"] != "WARM_START_RUNNING" or turns[0]["policy"] == "FINAL_REPORT":
+            raise StateError("warm-start evidence must be a non-final persisted turn")
+    if state["mode"] == "co-storm" and event_name == "reporting_started":
+        turns = load_co_storm_turns(run_path, state, required=True)
+        if (
+            turns[-1]["input_event"] != "USER_CONCLUDE"
+            or turns[-1]["policy"] != "FINAL_REPORT"
+            or turns[-1]["phase"] != "INTERACTIVE"
+            or turns[-1]["turn_id"] < 2
+        ):
+            raise StateError(
+                "REPORTING requires a persisted USER_CONCLUDE with FINAL_REPORT turn"
+            )
 
 
 def commit_state_change(
@@ -679,13 +1198,19 @@ def advance_run(args: argparse.Namespace) -> dict[str, Any]:
             f"illegal transition from {state['phase']!r}: expected {expected!r}, got {args.event!r}"
         )
     check_transition_prerequisites(run_path, state, args.event)
+    classic_publication = state["mode"] == "classic" and args.event == "completed"
+    if classic_publication:
+        publish_classic_artifacts(run_path, state)
     updated_state = copy.deepcopy(state)
     updated_state["phase"] = transition[1]
     updated_state["status"] = "complete" if transition[1] == "COMPLETE" else "running"
     updated_state["next_action"] = PHASE_ACTIONS[state["mode"]][transition[1]]
-    return commit_state_change(
+    committed = commit_state_change(
         run_path, state, events, updated_state, args.event, key
     )
+    if classic_publication:
+        cleanup_classic_staging(run_path)
+    return committed
 
 
 def interrupt_run(
@@ -777,6 +1302,18 @@ def initialize_run(args: argparse.Namespace) -> dict[str, Any]:
     event_log_path = control_directory / "event-log.jsonl"
     if run_path.exists() or event_log_path.exists():
         raise StateError(f"refusing to overwrite existing run state in {control_directory}")
+    if args.mode == "classic":
+        existing_public = [
+            name
+            for name in (f"{base_name}.html" for base_name in CLASSIC_ARTIFACT_BASE_NAMES)
+            if (output / name).exists()
+        ]
+        if existing_public:
+            raise StateError(
+                "refusing to initialize over existing public artifacts: "
+                f"{existing_public}"
+            )
+        (control_directory / "staging").mkdir(parents=True, exist_ok=True)
 
     timestamp = utc_now()
     state: dict[str, Any] = {
@@ -840,6 +1377,10 @@ def build_parser() -> argparse.ArgumentParser:
     advance_parser.add_argument("--run", required=True)
     advance_parser.add_argument("--event", required=True)
     advance_parser.set_defaults(handler=advance_run)
+    record_turn_parser = subparsers.add_parser("record-turn")
+    record_turn_parser.add_argument("--run", required=True)
+    record_turn_parser.add_argument("--turn", required=True)
+    record_turn_parser.set_defaults(handler=record_co_storm_turn)
     fail_parser = subparsers.add_parser("fail")
     fail_parser.add_argument("--run", required=True)
     fail_parser.add_argument("--error", required=True)

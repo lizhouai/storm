@@ -40,7 +40,7 @@ jobs:
 
       - name: Run offline forward-eval canary
         continue-on-error: true
-        run: python scripts/run_forward_evals.py --repetitions 10 --output .forward-evals
+        run: python scripts/run_forward_evals.py --repetitions 10 --output .results/forward-evals --replace
 
       - name: Discover skill with pinned CLI
         shell: bash
@@ -65,6 +65,7 @@ jobs:
           test -f "$support_dir/references/artifact-contract.md"
           test -f "$support_dir/references/classic-storm.md"
           test -f "$support_dir/references/co-storm.md"
+          test -f "$support_dir/references/co-storm-turn.schema.json"
           test -f "$support_dir/references/local-runner.md"
           test -f "$support_dir/references/run-state.schema.json"
           test -f "$support_dir/references/safety-contract.md"
@@ -74,6 +75,7 @@ jobs:
           test -f "$support_dir/scripts/validate_artifacts.py"
           python -m py_compile "$support_dir/scripts/audit_citations.py" "$support_dir/scripts/storm_state.py" "$support_dir/scripts/validate_artifacts.py"
           python "$support_dir/scripts/storm_state.py" --help >/dev/null
+          python "$support_dir/scripts/storm_state.py" --help | grep -F "record-turn"
 
       - name: Monitor the public owner/repo install path
         shell: bash
@@ -120,6 +122,7 @@ jobs:
           test -f "$support_dir/references/artifact-contract.md"
           test -f "$support_dir/references/classic-storm.md"
           test -f "$support_dir/references/co-storm.md"
+          test -f "$support_dir/references/co-storm-turn.schema.json"
           test -f "$support_dir/references/local-runner.md"
           test -f "$support_dir/references/run-state.schema.json"
           test -f "$support_dir/references/safety-contract.md"
@@ -129,3 +132,4 @@ jobs:
           test -f "$support_dir/scripts/validate_artifacts.py"
           python -m py_compile "$support_dir/scripts/audit_citations.py" "$support_dir/scripts/storm_state.py" "$support_dir/scripts/validate_artifacts.py"
           python "$support_dir/scripts/storm_state.py" --help >/dev/null
+          python "$support_dir/scripts/storm_state.py" --help | grep -F "record-turn"
