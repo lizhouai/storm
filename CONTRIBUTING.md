@@ -10,6 +10,7 @@ storm-research-skill/
   .gitattributes
   .gitignore
   README.md
+  CHANGELOG.md
   LICENSE
   CONTRIBUTING.md
   assets/
@@ -22,6 +23,8 @@ storm-research-skill/
     classic-rag-evaluation/
     co-storm-rag-evaluation/
     co-storm-rag-technology/
+  release-notes/
+    v0.5.0.md
   scripts/
     run_forward_evals.py
     validate_skill.py
@@ -58,6 +61,8 @@ storm-research-skill/
 - `evals/cases.json` defines executable behavior cases; `evals/baseline-results.json` preserves the historical pre-runtime behavior snapshot rather than current canary results.
 - `scripts/run_forward_evals.py` runs isolated forward-eval canaries, and `scripts/validate_skill.py` enforces the repository contract.
 - `README.md` is user-facing installation and usage documentation.
+- `CHANGELOG.md` is the canonical user-visible version history;
+  `release-notes/` contains the expanded body prepared for each GitHub Release.
 
 ## Development Guidelines
 
@@ -88,6 +93,19 @@ storm-research-skill/
   draft citation mappings for polished text, advance guarded state, or publish.
 - Keep instructions concise in `SKILL.md`; move detailed procedures to the matching mode-specific reference and preserve `storm-method.md` as an index.
 
+## Changelog Workflow
+
+- Add user-visible changes to `CHANGELOG.md` under `Unreleased` in the same
+  change that implements them. Use `Added`, `Changed`, `Fixed`, `Removed`, or
+  `Security` headings as applicable and omit empty headings.
+- Keep entries concise and describe user-visible behavior rather than internal
+  implementation steps. Link a pull request or commit when it materially helps
+  trace a change.
+- During release preparation, move completed entries into a dated version
+  section and update the comparison links at the bottom of the file.
+- GitHub Release notes may add verification evidence and known limitations, but
+  must not contradict or omit the release's CHANGELOG entry.
+
 ## Validation
 
 Before opening a pull request, run:
@@ -115,10 +133,12 @@ For maintainers preparing a release:
 2. Run all validation commands from a clean checkout.
 3. Confirm README, CONTRIBUTING, examples, repository URLs, install commands, and Pages links match the current behavior and repository name.
 4. Confirm `npx skills add lizhouai/storm-research-skill` discovers `storm` and includes the full bundle.
-5. Review the behavior cases and document any known gaps in the release notes.
-6. Commit with a clear English message and create an annotated Git tag.
-7. Push only after explicit approval to publish.
-8. Create a GitHub Release for the approved tag and mark it as latest when appropriate.
+5. Move the completed changes from `CHANGELOG.md`'s `Unreleased` section into
+   the dated release entry and keep the comparison links current.
+6. Review the behavior cases and document any known gaps in the release notes.
+7. Commit with a clear English message and create an annotated Git tag.
+8. Push only after explicit approval to publish.
+9. Create a GitHub Release for the approved tag and mark it as latest when appropriate.
 
 ## Pull Requests
 

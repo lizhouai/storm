@@ -201,6 +201,7 @@ checkpointing does not consume a predefined number of rounds.
 ```text
 storm-research-skill/
   README.md
+  CHANGELOG.md
   LICENSE
   CONTRIBUTING.md
   assets/
@@ -213,6 +214,8 @@ storm-research-skill/
     classic-rag-evaluation/
     co-storm-rag-evaluation/
     co-storm-rag-technology/
+  release-notes/
+    v0.5.0.md
   scripts/
     run_forward_evals.py
     validate_skill.py
@@ -271,6 +274,8 @@ For a global installation, use the matching global scope:
 ```bash
 npx skills update storm -g
 ```
+
+See [CHANGELOG.md](CHANGELOG.md) for release history and upgrade-relevant changes.
 
 ## Development
 
