@@ -7,6 +7,12 @@ Releases are identified by `vX.Y.Z` Git tags.
 
 ## [Unreleased]
 
+### Changed
+
+- Made `CONTRIBUTING.md` the single source of truth for local development,
+  validation, changelog, and release instructions, and reduced the README to a
+  concise contribution link.
+
 ## [0.5.0] - 2026-07-12
 
 ### Added

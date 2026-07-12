@@ -277,33 +277,10 @@ npx skills update storm -g
 
 See [CHANGELOG.md](CHANGELOG.md) for release history and upgrade-relevant changes.
 
-## Development
+## Contributing
 
-Clone the repository:
-
-```bash
-git clone https://github.com/lizhouai/storm-research-skill.git
-cd storm-research-skill
-```
-
-Run the repository checks and validate local discovery:
-
-```bash
-python scripts/validate_skill.py
-python -m unittest discover -s tests -p "test_*.py"
-python scripts/run_forward_evals.py --repetitions 10 --output .results/forward-evals --replace
-npx -y skills@1.5.15 add . --list
-npx -y skills@1.5.15 use . --skill storm
-git diff --check
-empty_tree="$(git hash-object -t tree /dev/null)"
-git diff --check "$empty_tree" HEAD
-```
-
-Install your local working copy while developing:
-
-```bash
-npx skills add . -g --copy
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, validation, changelog,
+and release instructions.
 
 ## License
 

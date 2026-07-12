@@ -64,6 +64,21 @@ storm-research-skill/
 - `CHANGELOG.md` is the canonical user-visible version history;
   `release-notes/` contains the expanded body prepared for each GitHub Release.
 
+## Local Development
+
+Clone the repository:
+
+```bash
+git clone https://github.com/lizhouai/storm-research-skill.git
+cd storm-research-skill
+```
+
+Install the local working copy while developing:
+
+```bash
+npx skills add . -g --copy
+```
+
 ## Development Guidelines
 
 - Preserve the skill name `storm`.
