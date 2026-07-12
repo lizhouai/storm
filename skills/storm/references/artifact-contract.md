@@ -14,7 +14,7 @@ The guarded publication path supports HTML only and defaults to
 `.results/<topic-slug>/`. If the user requests another Classic file format,
 offer the validated HTML bundle or chat-only fallback and disclose that the
 non-HTML output would not pass the guarded artifact gate. Internal state, event
-logs, retrieval traces, information tables, and audits belong in `.storm-run/`
+logs, retrieval indexes and traces, information tables, and audits belong in `.storm-run/`
 and do not count as additional public deliverables.
 
 ## Structural Gates

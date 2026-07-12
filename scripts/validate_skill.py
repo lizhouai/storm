@@ -25,12 +25,14 @@ REFERENCE_FILES = {
     "references/co-storm.md",
     "references/co-storm-turn.schema.json",
     "references/local-runner.md",
+    "references/retrieval-backends.md",
     "references/run-state.schema.json",
     "references/safety-contract.md",
     "references/storm-method.md",
 }
 RUNTIME_FILES = {
     "scripts/audit_citations.py",
+    "scripts/retrieval_backend.py",
     "scripts/storm_state.py",
     "scripts/validate_artifacts.py",
 }
@@ -506,6 +508,7 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
     artifact_text = read_utf8(SKILL_DIR / "references" / "artifact-contract.md")
     safety_text = read_utf8(SKILL_DIR / "references" / "safety-contract.md")
     local_runner_text = read_utf8(SKILL_DIR / "references" / "local-runner.md")
+    retrieval_text = read_utf8(SKILL_DIR / "references" / "retrieval-backends.md")
     combined = "\n".join(
         (
             skill_text,
@@ -516,6 +519,7 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
             artifact_text,
             safety_text,
             local_runner_text,
+            retrieval_text,
             readme_text,
             openai_text,
         )
@@ -609,6 +613,18 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
     require(
         "--staging" in skill_text and ".storm-run/staging" in artifact_text,
         "guarded Classic validation must remain staging-first",
+    )
+    require(
+        "scripts/retrieval_backend.py" in skill_text
+        and "retrieval-backends.md" in skill_text
+        and re.search(r"not execution\s+backend\s+values", skill_text.lower()) is not None,
+        "optional retrieval must be bundled without changing execution backend semantics",
+    )
+    require(
+        "zero-dependency deterministic fallback" in retrieval_text.lower()
+        and "explicit `--fallback lexical`" in retrieval_text.lower()
+        and "never installs" in retrieval_text.lower(),
+        "retrieval contract must keep lexical zero-dependency and embedding fallback explicit",
     )
     require(
         "compatibility index" in method_text.lower()

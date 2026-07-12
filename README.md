@@ -17,6 +17,8 @@ It helps the agent:
 - generate multiple writer perspectives, including a basic fact writer
 - run search-backed simulated interviews from each perspective
 - collect evidence into an information table
+- use host-ranked evidence, deterministic multilingual lexical search, or an
+  explicitly configured embedding provider without adding a base dependency
 - refine an outline from the gathered evidence
 - write section-by-section with inline citations
 - produce the standard STORM artifact bundle
@@ -169,6 +171,14 @@ completed runs revalidate that receipt. Prompt-only fallback remains available w
 unavailable or the user explicitly requests chat-only output, with the reduced
 enforcement boundary stated in the response.
 
+Optional retrieval is also bundled without a model dependency. Host mode
+records rankings supplied by the current Agent or runner, lexical mode provides
+deterministic zero-dependency BM25 with Unicode/CJK terms, and embedding mode
+requires an explicit trusted provider, model name, and provider version. An
+unavailable embedding provider fails closed unless lexical fallback is
+explicitly selected; the requested/effective backend and reason remain in the
+internal retrieval trace.
+
 The prompt-native Co-STORM preview is used only when you explicitly ask for interactive exploration, roundtable discussion, user steering, or a mind map. It starts with a mini STORM warm start, renders role-attributed simulated discussion instead of hiding participants in internal state, maintains a cited mind map during the conversation, and returns the final report in chat or writes only requested artifacts when you ask to conclude. The Co-STORM reference describes the portable prompt protocol, but this repository does not bundle DSPy modules, independently running expert agents, or an executable Co-STORM runner.
 
 For persistent Co-STORM runs, `record-turn` validates turn order, stable
@@ -239,11 +249,13 @@ storm-research-skill/
         co-storm.md
         co-storm-turn.schema.json
         local-runner.md
+        retrieval-backends.md
         run-state.schema.json
         safety-contract.md
         storm-method.md
       scripts/
         audit_citations.py
+        retrieval_backend.py
         storm_state.py
         validate_artifacts.py
 ```

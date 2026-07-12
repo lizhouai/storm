@@ -14,7 +14,9 @@ SCRIPTS = ROOT / "skills" / "storm" / "scripts"
 STATE_CLI = SCRIPTS / "storm_state.py"
 ARTIFACT_CLI = SCRIPTS / "validate_artifacts.py"
 CITATION_CLI = SCRIPTS / "audit_citations.py"
+RETRIEVAL_CLI = SCRIPTS / "retrieval_backend.py"
 FIXTURES = ROOT / "tests" / "fixtures" / "classic-run"
+RETRIEVAL_FIXTURES = ROOT / "tests" / "fixtures" / "retrieval"
 
 TRANSITIONS = (
     ("scope_defined", "SCOPED"),
@@ -65,7 +67,8 @@ class FakeClassicRunTests(unittest.TestCase):
 
     def test_fake_classic_run_reaches_complete_through_real_clis(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            result = self.run_complete(Path(directory) / "run")
+            output = Path(directory) / "run"
+            result = self.run_complete(output)
 
             self.assertEqual(result["state"]["phase"], "COMPLETE")
             self.assertEqual(result["state"]["status"], "complete")
@@ -73,6 +76,15 @@ class FakeClassicRunTests(unittest.TestCase):
             self.assertTrue(result["citation_report"]["valid"])
             self.assertTrue(result["artifact_report"]["valid"])
             self.assertEqual(len(result["artifact_report"]["artifacts"]), 4)
+            retrieval_rows = [
+                json.loads(line)
+                for line in (output / ".storm-run" / "retrieval-log.jsonl")
+                .read_text(encoding="utf-8")
+                .splitlines()
+            ]
+            self.assertTrue(retrieval_rows)
+            self.assertTrue(all(row["backend_used"] == "lexical" for row in retrieval_rows))
+            self.assertTrue(all(row["model"] is None for row in retrieval_rows))
 
     def test_every_nonterminal_phase_resumes_in_a_fresh_process(self) -> None:
         for phase in NONTERMINAL_PHASES:
@@ -198,7 +210,7 @@ class FakeClassicRunTests(unittest.TestCase):
         control = output / ".storm-run"
         fixture_names = {
             "perspectives_ready": ("perspectives.json",),
-            "interviews_completed": ("retrieval-log.jsonl", "interviews.jsonl"),
+            "interviews_completed": ("interviews.jsonl",),
             "information_table_ready": ("information-table.jsonl",),
             "direct_outline_ready": ("direct_gen_outline.html",),
             "refined_outline_ready": ("storm_gen_outline.html",),
@@ -213,6 +225,39 @@ class FakeClassicRunTests(unittest.TestCase):
                 else control / "staging" / name
             )
             shutil.copyfile(FIXTURES / name, destination)
+        if event == "interviews_completed":
+            index_path = control / "retrieval-index.json"
+            trace_path = control / "retrieval-log.jsonl"
+            self.run_python(
+                RETRIEVAL_CLI,
+                "index",
+                "--backend",
+                "lexical",
+                "--corpus",
+                str(RETRIEVAL_FIXTURES / "corpus.jsonl"),
+                "--output",
+                str(index_path),
+                "--chunk-size",
+                "500",
+                "--chunk-overlap",
+                "0",
+            )
+            for query in (
+                "deterministic retrieval fixed evidence",
+                "citation audit unsupported claims",
+            ):
+                self.run_python(
+                    RETRIEVAL_CLI,
+                    "search",
+                    "--index",
+                    str(index_path),
+                    "--query",
+                    query,
+                    "--top-k",
+                    "1",
+                    "--trace",
+                    str(trace_path),
+                )
 
     def run_citation_audit(self, output: Path) -> dict[str, object]:
         control = output / ".storm-run"

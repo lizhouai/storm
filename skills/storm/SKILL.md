@@ -27,6 +27,9 @@ and preserve the user's source, file, language, and side-effect boundaries.
 Do not load the complete Co-STORM procedure for a Classic request or the full
 Classic artifact procedure for an interactive-only request. The compatibility
 index at `references/storm-method.md` points older callers to the split files.
+Load `references/retrieval-backends.md` only when the user selects a retrieval
+backend, a local corpus needs deterministic lexical search, or embedding is
+explicitly requested.
 
 If the prompt is Chinese, use Chinese by default while preserving standard
 English technical terms. Keep the display topic separate from filesystem slugs.
@@ -101,6 +104,16 @@ report intent, and the turn hash chain before lifecycle transitions. The
 Classic artifact validator does not mechanically verify Co-STORM mind-map or
 report contents. Follow `references/co-storm.md` for the output contract and
 review source and citation support before reporting completion.
+
+Optional evidence retrieval uses `scripts/retrieval_backend.py`. Retrieval
+backend values (`host`, `lexical`, and `embedding`) are not execution backend
+values and never change `run.json.execution_backend`. Keep its index and rich
+result-row trace inside `.storm-run/`; each hit must retain a resolvable
+`source_id`. Host ranking must be supplied explicitly, lexical search is the
+zero-dependency deterministic fallback, and embedding requires a trusted
+explicit provider/model/version. An unavailable embedding provider fails by
+default and may use lexical only when `--fallback lexical` is explicit and the
+fallback reason remains visible.
 
 ## Stable Deliverables
 

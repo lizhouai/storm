@@ -1,0 +1,3 @@
+{"source_id":"S1","title":"Deterministic retrieval","url":"https://example.com/retrieval","text":"Deterministic lexical retrieval uses fixed evidence and stable ranking."}
+{"source_id":"S2","title":"Citation auditing","url":"https://example.com/audit","text":"Citation audit rejects unsupported claims and preserves source mappings."}
+{"source_id":"S3","title":"中文检索","url":"https://example.com/zh-retrieval","text":"中文检索使用确定性词法回退，并保留查询参数和片段哈希。"}

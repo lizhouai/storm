@@ -124,6 +124,7 @@ class GuardedRoutingRegressionTests(unittest.TestCase):
             "scripts/storm_state.py",
             "scripts/validate_artifacts.py",
             "scripts/audit_citations.py",
+            "scripts/retrieval_backend.py",
         ):
             self.assertIn(runtime_path, skill_text)
         self.assertIn("execute exactly `next_action`", skill_text)
@@ -141,6 +142,17 @@ class GuardedRoutingRegressionTests(unittest.TestCase):
         self.assertIn("explicitly requests chat-only", skill_text)
         self.assertIn("unified guarded state", local_runner_text)
         self.assertIn("citation audit", local_runner_text)
+
+    def test_optional_retrieval_does_not_change_execution_backend_semantics(self) -> None:
+        skill_text = VALIDATOR.SKILL_FILE.read_text(encoding="utf-8")
+        retrieval_text = (
+            VALIDATOR.SKILL_DIR / "references" / "retrieval-backends.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertRegex(skill_text, r"not execution\s+backend\s+values")
+        self.assertIn("zero-dependency deterministic fallback", retrieval_text)
+        self.assertIn("explicit `--fallback lexical`", retrieval_text)
+        self.assertIn("never installs", retrieval_text)
 
 
 class ForwardEvalSchemaRegressionTests(unittest.TestCase):
