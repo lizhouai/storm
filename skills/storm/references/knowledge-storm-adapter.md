@@ -30,10 +30,9 @@ Use the bundled adapter before attempting execution:
 python scripts/runner_adapter.py probe
 ```
 
-The probe uses `importlib.util.find_spec` and
-`importlib.metadata.version("knowledge-storm")`; it does not import the
-`knowledge_storm` root package or install anything. A missing or unsupported
-dependency is a requirement report, not permission to install it.
+The probe uses `importlib.metadata.version("knowledge-storm")`; it does not
+import the `knowledge_storm` root package or install anything. A missing or
+unsupported dependency is a requirement report, not permission to install it.
 
 ## Safe Upstream Execution
 

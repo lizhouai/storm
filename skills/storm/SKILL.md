@@ -54,8 +54,7 @@ identify it as experimental in the completion report.
 | User intent or available input | Internal retrieval choice |
 |---|---|
 | Ordinary Agent-led research without a user-provided local corpus or provider | Use the Agent's available search/retrieval tools, then pass its explicitly ranked evidence through `host` so the selection is traced |
-| A user-provided local corpus without an explicit embedding provider | Use deterministic `lexical` retrieval and stay inside the corpus boundary |
-| An explicit embedding provider, model, and provider version | Use `embedding`; do not discover or install a provider |
+| A user-provided local corpus | Use deterministic `lexical` retrieval and stay inside the corpus boundary |
 | An explicit user choice among supported retrieval mechanisms | Honor it if it stays within the stated source and authority boundaries |
 
 Load `references/retrieval-backends.md` whenever evidence retrieval is needed
@@ -150,14 +149,12 @@ report contents. Follow `references/co-storm.md` for the output contract and
 review source and citation support before reporting completion.
 
 Experimental evidence retrieval uses `scripts/retrieval_backend.py`. Retrieval
-backend values (`host`, `lexical`, and `embedding`) are not execution backend
-values and never change `run.json.execution_backend`. Keep its index and rich
-result-row trace inside `.storm-run/`; each hit must retain a resolvable
-`source_id`. Host ranking must be supplied explicitly, lexical search is the
-zero-dependency deterministic fallback, and embedding requires a trusted
-explicit provider/model/version. An unavailable embedding provider fails by
-default and may use lexical only when `--fallback lexical` is explicit and the
-fallback reason remains visible.
+backend values (`host` and `lexical`) are not execution backend values and
+never change `run.json.execution_backend`. Keep its index and rich result-row
+trace inside `.storm-run/`; each hit must retain a resolvable `source_id`. Host
+ranking must be supplied explicitly, and lexical search is the zero-dependency
+deterministic path for a user-provided corpus. The bundled retrieval runtime
+never imports provider code, installs packages, or performs network access.
 
 Official Classic runner import uses `scripts/runner_adapter.py`. Probe
 `knowledge-storm` without importing it, require a supported stable version from
