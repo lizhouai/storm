@@ -1,6 +1,6 @@
 # STORM Research Skill
 
-[![Release](https://img.shields.io/github/v/release/lizhouai/storm-research-skill?label=release&style=for-the-badge&labelColor=555555&color=007ec6&cacheSeconds=300&cacheBust=v0.5.0)](https://github.com/lizhouai/storm-research-skill/releases/latest)
+[![Release](https://img.shields.io/github/v/release/lizhouai/storm-research-skill?label=release&style=for-the-badge&labelColor=555555&color=007ec6&cacheSeconds=300&cacheBust=v0.6.0)](https://github.com/lizhouai/storm-research-skill/releases/latest)
 [![License](https://img.shields.io/github/license/lizhouai/storm-research-skill?label=license&style=for-the-badge&labelColor=555555&color=97ca00)](LICENSE)
 
 An Agent Skill for STORM-style deep research: perspective-guided interviews, source-grounded synthesis, structured outlines, inline citations, and verification notes.
@@ -19,7 +19,7 @@ one-shot summary.
 | Guarded and recoverable | Versioned state, one enforced next action, staging, artifact hashes, and retry-safe publication for file-producing runs |
 | Interactive exploration | A prompt-native Co-STORM preview with visible simulated participants, a cited mind map, and free-form steering |
 | Portable core | A standard Agent Skill layout and bundled runtime scripts with no third-party Python dependency |
-| Flexible evidence paths | Experimental Agent-ranked, local lexical, explicit embedding, and official Classic output-import paths |
+| Flexible evidence paths | Experimental Agent-ranked and local lexical retrieval, plus official Classic output import |
 
 Classic STORM is the default. The Co-STORM experience is an Agent workflow, not
 a bundled `knowledge-storm` runner.
@@ -68,8 +68,8 @@ Co-STORM supports free-form steering; suggestions are optional. Say
 to write the requested mind map and/or report. Ask to persist, resume, or hand
 off when durable turn state is required.
 
-**Experimental:** automatic retrieval routing (Agent-ranked, local lexical, or
-explicit embedding) is the default for guarded evidence retrieval. Official
+**Experimental:** automatic retrieval routing (Agent-ranked or local lexical)
+is the default for guarded evidence retrieval. Official
 Classic output import activates only for an existing run. Both fail closed and
 may change before becoming stable.
 
@@ -143,11 +143,9 @@ enforcement boundary stated in the response.
 
 Experimental retrieval is bundled without a model dependency. Host mode
 records rankings supplied by the current Agent or runner, lexical mode provides
-deterministic zero-dependency BM25 with Unicode/CJK terms, and embedding mode
-requires an explicit trusted provider, model name, and provider version. An
-unavailable embedding provider fails closed unless lexical fallback is
-explicitly selected; the requested/effective backend and reason remain in the
-internal retrieval trace.
+deterministic zero-dependency BM25 with Unicode/CJK terms, and neither mode
+loads provider code or performs network access. The requested/effective backend
+and ranking metadata remain in the internal retrieval trace.
 
 An experimental zero-dependency adapter can probe an existing `knowledge-storm`
 installation without importing it and map stable `>=1.1.1,<1.2` Classic runner outputs

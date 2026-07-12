@@ -7,11 +7,22 @@ Releases are identified by `vX.Y.Z` Git tags.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-07-12
+
+### Security
+
+- Removed the experimental in-process embedding-provider loader so untrusted
+  module names or Python file paths cannot become a code-execution surface.
+- Replaced the runner adapter's dynamic sibling-module loader with a normal
+  fixed import while preserving official Classic output import behavior.
+
 ### Changed
 
 - Made `CONTRIBUTING.md` the single source of truth for local development,
   validation, changelog, and release instructions, and reduced the README to a
   concise contribution link.
+- Limited bundled retrieval to host-ranked and deterministic lexical data paths;
+  neither path imports provider code or performs network access.
 
 ### Fixed
 
@@ -130,7 +141,8 @@ Releases are identified by `vX.Y.Z` Git tags.
 - Added upstream attribution, the public installation path, and the MIT
   License.
 
-[Unreleased]: https://github.com/lizhouai/storm-research-skill/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/lizhouai/storm-research-skill/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/lizhouai/storm-research-skill/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/lizhouai/storm-research-skill/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/lizhouai/storm-research-skill/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/lizhouai/storm-research-skill/compare/v0.3.0...v0.4.0
