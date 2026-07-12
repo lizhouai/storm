@@ -114,7 +114,7 @@ class RunnerAdapterTests(unittest.TestCase):
 
     def test_probe_uses_distribution_metadata_without_importing_the_runner(self) -> None:
         adapter = self.load_adapter_module()
-        with mock.patch.object(adapter.importlib.util, "find_spec", return_value=None), mock.patch.object(
+        with mock.patch.object(
             adapter.metadata,
             "version",
             side_effect=importlib.metadata.PackageNotFoundError("knowledge-storm"),
@@ -128,9 +128,7 @@ class RunnerAdapterTests(unittest.TestCase):
         self.assertIn("knowledge-storm", missing["requirement"])
         self.assertIn("stable releases", missing["requirement"])
 
-        with mock.patch.object(adapter.importlib.util, "find_spec", return_value=object()), mock.patch.object(
-            adapter.metadata, "version", return_value="1.1.1"
-        ):
+        with mock.patch.object(adapter.metadata, "version", return_value="1.1.1"):
             available = adapter.probe_dependency()
         self.assertTrue(available["available"])
         self.assertTrue(available["installed"])
@@ -138,9 +136,7 @@ class RunnerAdapterTests(unittest.TestCase):
         self.assertEqual(available["version"], "1.1.1")
         self.assertEqual(available["version_source"], "distribution-metadata")
 
-        with mock.patch.object(adapter.importlib.util, "find_spec", return_value=object()), mock.patch.object(
-            adapter.metadata, "version", return_value="2.0.0"
-        ):
+        with mock.patch.object(adapter.metadata, "version", return_value="2.0.0"):
             incompatible = adapter.probe_dependency()
         self.assertTrue(incompatible["installed"])
         self.assertFalse(incompatible["supported"])
@@ -426,7 +422,15 @@ class RunnerAdapterTests(unittest.TestCase):
         if spec is None or spec.loader is None:
             raise AssertionError("unable to load runner adapter")
         module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        script_path = str(SCRIPTS)
+        inserted = script_path not in sys.path
+        if inserted:
+            sys.path.insert(0, script_path)
+        try:
+            spec.loader.exec_module(module)
+        finally:
+            if inserted:
+                sys.path.remove(script_path)
         return module
 
 

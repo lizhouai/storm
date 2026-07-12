@@ -7,7 +7,6 @@ import argparse
 import hashlib
 import html
 import importlib.metadata as metadata
-import importlib.util
 import json
 import os
 import re
@@ -15,6 +14,8 @@ import sys
 import tempfile
 from pathlib import Path
 from typing import Any, Sequence
+
+import storm_state
 
 
 ADAPTER_SCHEMA_VERSION = "1.0"
@@ -72,24 +73,6 @@ HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 
 class AdapterError(ValueError):
     """Raised when runner output cannot be mapped without guessing or overwriting."""
-
-
-def _load_storm_state():
-    try:
-        import storm_state as module
-
-        return module
-    except ModuleNotFoundError:
-        path = Path(__file__).with_name("storm_state.py")
-        specification = importlib.util.spec_from_file_location("storm_state", path)
-        if specification is None or specification.loader is None:
-            raise AdapterError("bundled storm_state.py could not be loaded")
-        module = importlib.util.module_from_spec(specification)
-        specification.loader.exec_module(module)
-        return module
-
-
-storm_state = _load_storm_state()
 
 
 def canonical_json(value: Any) -> str:
@@ -214,14 +197,10 @@ def write_outputs(outputs: dict[Path, bytes]) -> tuple[list[str], list[str]]:
 
 def probe_dependency() -> dict[str, Any]:
     try:
-        import_visible = importlib.util.find_spec(RUNNER_IMPORT) is not None
-    except (ImportError, ValueError):
-        import_visible = False
-    try:
         version = metadata.version(RUNNER_DISTRIBUTION)
     except metadata.PackageNotFoundError:
         version = None
-    installed = bool(import_visible and version)
+    installed = version is not None
     supported = bool(version and supported_runner_version(version))
     available = bool(installed and supported)
     return {
