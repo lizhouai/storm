@@ -23,6 +23,8 @@ participant has a stable id, display name, role, current stance, and
    user. A participant list alone is not a roundtable.
 5. State once that participants are simulated and the board is not durable.
 6. Offer two or three short choice-first steering options, recommended first.
+   Treat them as suggestions rather than a closed menu and accept free-form
+   steering in the user's own words.
 
 ## Turn Protocol
 
@@ -37,14 +39,26 @@ participant has a stable id, display name, role, current stance, and
    disagreement, or promising unused evidence.
 6. Update discourse history, `last_spoke_turn`, mind-map delta, citations, open
    questions, and the next candidate action to match the visible speakers.
-7. End non-final turns with one choice-first steering question.
+7. End non-final turns with one choice-first steering question while preserving
+   free-form steering as an equally valid response.
 
 ## Checkpoint And Recovery
 
 A conversation-only board remains recoverable only while the host preserves its
-visible context. For a persistent run, create one direct
-`.storm-run/turn-<n>.json` payload per warm-start, interactive, or conclusion
-turn using `co-storm-turn.schema.json`, then call:
+visible context. A persistent run must follow the state CLI's executable order:
+
+1. initialize with `storm_state.py init --mode co-storm ...`;
+2. advance with `warm_start_started`;
+3. create the warm-start `.storm-run/turn-1.json` and call `record-turn`;
+4. advance with `warm_start_completed`;
+5. while `INTERACTIVE`, record each later interactive turn;
+6. record the conclusion as `USER_CONCLUDE` with `FINAL_REPORT` and no remaining
+   next actions;
+7. advance with `reporting_started`, review the report and requested files,
+   then advance with `verified` and `completed`.
+
+For every recorded turn, create one direct `.storm-run/turn-<n>.json` payload
+using `co-storm-turn.schema.json`, then call:
 
 ```text
 python scripts/storm_state.py record-turn --run <run.json> --turn <turn.json>

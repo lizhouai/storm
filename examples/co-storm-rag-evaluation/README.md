@@ -49,6 +49,9 @@ RAG evaluation
 - **Compare automation assumptions:** examine reference-free metrics versus trained judges and labeled calibration.
 - **Design a minimal stack:** combine routine checks, escalation, and human review.
 
+These options are suggestions, not a closed menu; any free-form question,
+constraint, redirection, or request to conclude is valid steering.
+
 ## User steering
 
 ```text
@@ -92,6 +95,8 @@ Evaluation intent
 - **Build the layered stack — recommended:** turn the map into a practical regression and escalation workflow.
 - **Challenge judge reliability:** focus on model-based metric failure modes.
 - **Write the report:** conclude from the current cited mind map.
+
+The same free-form steering rule applies after every round.
 
 ## References
 

@@ -1,6 +1,8 @@
 # Examples
 
-These checked-in examples show the two public workflows provided by the `storm` skill. They are proof of output shape and source traceability, not benchmark results.
+These checked-in examples illustrate the Classic artifact workflow and the
+prompt-native Co-STORM experience. They show output shape and source
+traceability, not benchmark results or the complete capability set.
 
 ## Classic STORM artifact bundle
 

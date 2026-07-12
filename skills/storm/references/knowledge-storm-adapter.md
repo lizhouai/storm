@@ -1,4 +1,7 @@
-# Official Knowledge STORM Adapter
+# Experimental Official Knowledge STORM Adapter
+
+Status: **Experimental**. This import path is in testing, remains optional, and
+must fail closed when the supported upstream contract cannot be verified.
 
 Load this reference when the user provides an output directory from an already
 executed official Classic STORM run or asks to import or synchronize that run
@@ -6,9 +9,10 @@ into the guarded workflow. Infer this from the described source and goal; do
 not require an adapter name or implementation-stage label. The bundle includes
 an import adapter, not
 `knowledge-storm`, DSPy, models, retrievers, credentials, or an executable
-Co-STORM runtime. The tested file contract is `knowledge-storm` 1.1.x; version
-discovery uses distribution metadata because the upstream module version may
-not match the installed distribution.
+Co-STORM runtime. The supported stable contract is
+`knowledge-storm>=1.1.1,<1.2`, currently verified against official 1.1.1.
+Version discovery uses distribution metadata because the upstream module
+version may not match the installed distribution.
 
 Primary upstream contracts:
 
@@ -40,7 +44,7 @@ uses overwrite-style writes for topic files. The private runner directory must
 not be the guarded output's ancestor or descendant; any tree overlap is
 rejected so raw configuration and LM history cannot enter the public boundary.
 
-The Classic 1.1.x runner can emit:
+The supported `>=1.1.1,<1.2` Classic runner can emit:
 
 ```text
 conversation_log.json
@@ -73,6 +77,9 @@ map. A reliable wrapper must:
 
 If `polished_url_to_info.json` is absent or inconsistent, the adapter refuses
 the polish phase. It never guesses that draft and polished citation ids match.
+The polished map may retain metadata for citations removed during polishing;
+`url_to_unified_index` keys must be a subset of `url_to_info` keys, and only
+the indexed sources are imported.
 
 ## Phase-By-Phase Import
 
@@ -83,7 +90,7 @@ call:
 python scripts/runner_adapter.py sync \
   --run <output>/.storm-run/run.json \
   --source <private-official-topic-directory> \
-  --runner-version <1.1.x> \
+  --runner-version 1.1.1 \
   --retriever <name> --retriever-version <version> --search-top-k <n>
 ```
 
@@ -102,7 +109,7 @@ or publishes files.
 | `write_draft` | escaped draft HTML and internal draft source mapping |
 | `polish_article` | escaped polished HTML, authoritative polished sources, and unreviewed claim candidates |
 | `verify_artifacts` | no automatic event; requires semantic claim review, citation audit, and artifact validation |
-| `publish` | no direct write; instructs the guarded state CLI to perform atomic publication |
+| `publish` | no direct write; instructs the guarded state CLI to perform hash-checked, retry-safe publication |
 
 Blank queries are filtered, but a turn with no remaining query or resolvable
 source fails closed. Raw runner HTML is escaped, unsafe URLs are rendered as

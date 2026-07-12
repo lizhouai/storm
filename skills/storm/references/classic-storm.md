@@ -8,8 +8,9 @@ and the explicit chat-only exception.
 1. Frame topic, audience, scope, recency, language, source limits, and depth.
 2. Plan sources before retrieval. Prefer primary papers, standards, official
    documentation, and strong surveys; use vendor material only for claims about
-   that vendor. When the user selects a local retrieval backend, load
-   `retrieval-backends.md` and keep its index and trace under `.storm-run/`.
+   that vendor. When evidence retrieval is needed, load the experimental
+   `retrieval-backends.md`, infer the route from the user's available inputs,
+   and keep its index and trace under `.storm-run/`.
 3. Generate `Basic fact writer` and up to three non-overlapping perspectives.
 4. For each perspective, run up to three interview turns. Ask one new question,
    produce at most three non-empty queries, retrieve, and answer only from the

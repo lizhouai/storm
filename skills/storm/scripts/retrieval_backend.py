@@ -594,7 +594,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    index_parser = subparsers.add_parser("index", help="Build a deterministic corpus index")
+    index_parser = subparsers.add_parser("index", help="Build a traceable corpus index")
     index_parser.add_argument("--backend", choices=BACKENDS, required=True)
     index_parser.add_argument("--corpus", type=Path, required=True)
     index_parser.add_argument("--output", type=Path, required=True)

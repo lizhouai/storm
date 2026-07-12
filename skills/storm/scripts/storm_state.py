@@ -1035,7 +1035,10 @@ def publish_classic_artifacts(run_path: Path, state: dict[str, Any]) -> dict[str
         receipt_path.unlink(missing_ok=True)
         for target in published_paths:
             target.unlink(missing_ok=True)
-        raise StateError(f"atomic Classic publication failed: {error}") from error
+        raise StateError(
+            "atomic Classic publication failed; validated staging retained at "
+            f"{staging_directory}: {error}"
+        ) from error
 
 
 def cleanup_classic_staging(run_path: Path) -> None:

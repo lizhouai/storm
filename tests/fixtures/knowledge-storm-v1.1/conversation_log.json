@@ -3,8 +3,8 @@
     "perspective": "Basic fact writer",
     "dlg_turns": [
       {
-        "agent_utterance": "How is deterministic runner evidence captured?",
-        "user_utterance": "The official runner keeps structured conversation and search outputs.",
+        "user_utterance": "How is deterministic runner evidence captured?",
+        "agent_utterance": "The official runner keeps structured conversation and search outputs.",
         "search_queries": ["knowledge storm structured output", ""],
         "search_results": [
           {
@@ -21,8 +21,8 @@
     "perspective": "Reliability specialist",
     "dlg_turns": [
       {
-        "agent_utterance": "How are citation mappings kept reliable?",
-        "user_utterance": "A captured polished reference map is required before publication.",
+        "user_utterance": "How are citation mappings kept reliable?",
+        "agent_utterance": "A captured polished reference map is required before publication.",
         "search_queries": ["polished citation reference mapping"],
         "search_results": [
           {

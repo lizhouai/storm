@@ -1,4 +1,4 @@
 interface:
   display_name: "STORM Research"
   short_description: "Source-grounded STORM research and cited reports"
-  default_prompt: "Use $storm for source-grounded research, standard cited artifacts, or a prompt-native Co-STORM preview."
+  default_prompt: "Use $storm for source-grounded research, cited Classic artifacts, a prompt-native Co-STORM preview, or an existing STORM run. Retrieval routing and official Classic output import are experimental."

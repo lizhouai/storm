@@ -1,7 +1,8 @@
 # Local Runner STORM
 
-Use this route only when the user asks to execute an existing repository,
-script, environment, or installed STORM implementation.
+Use this route when the user asks to execute an existing repository, script,
+environment, or installed STORM implementation, or to import output from an
+already executed official Classic run.
 
 1. Inspect the runner interface, expected environment, flags, topic handling,
    output directory, and resume behavior before execution.
@@ -26,7 +27,8 @@ If the user asks for an official Co-STORM implementation, use this route and
 verify that implementation rather than presenting the prompt-native preview as
 an executable runtime.
 
-For the official Classic `STORMWikiRunner`, additionally load
+For experimental import of official Classic `STORMWikiRunner` output,
+additionally load
 `knowledge-storm-adapter.md` and use `../scripts/runner_adapter.py` to probe and
 import its private output directory one guarded phase at a time. Do not use the
 Classic adapter for `CoStormRunner`, and do not reuse the draft reference map

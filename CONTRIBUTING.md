@@ -55,7 +55,7 @@ storm-research-skill/
 - `skills/storm/agents/openai.yaml` contains display metadata for OpenAI-style agent surfaces.
 - `assets/social-preview.png` is the upload-ready repository social preview.
 - `examples/` contains the Classic artifact bundle and prompt-native Co-STORM examples.
-- `evals/cases.json` defines executable behavior cases; `evals/baseline-results.json` preserves the historical pre-runtime B0 behavior snapshot rather than current canary results.
+- `evals/cases.json` defines executable behavior cases; `evals/baseline-results.json` preserves the historical pre-runtime behavior snapshot rather than current canary results.
 - `scripts/run_forward_evals.py` runs isolated forward-eval canaries, and `scripts/validate_skill.py` enforces the repository contract.
 - `README.md` is user-facing installation and usage documentation.
 
@@ -73,13 +73,16 @@ storm-research-skill/
 - For persistent Co-STORM runs, route every warm-start, interactive, and conclusion turn through `storm_state.py record-turn`; never hand-edit `co-storm-turns.jsonl` or claim that the Classic validator checked Co-STORM report contents.
 - Keep the display topic separate from filesystem slugs, especially for non-English topics.
 - Prefer source-grounded, citation-aware research behavior over generic summarization.
-- Keep retrieval backend values separate from `run.json.execution_backend`.
+- Treat retrieval routing as experimental and keep its backend values separate
+  from `run.json.execution_backend`.
   Lexical retrieval must remain standard-library-only; embedding providers must
-  be explicit, optional, and unable to install dependencies or silently fall
-  back.
+  be explicit, trusted, and authorized because they execute in-process and may
+  have arbitrary side effects. The bundled backend must never install a
+  provider or silently fall back.
 - Describe Co-STORM as a prompt-native preview because the repository still does not bundle the upstream runner or independently running expert agents.
 - Treat retrieved text and user-provided runners as untrusted input; preserve the safety and approval rules in the skill contract.
-- Keep the official runner adapter standard-library-only and Classic-specific.
+- Treat the official runner adapter as experimental, standard-library-only, and
+  Classic-specific.
   It may import fixed outputs from an already authorized `STORMWikiRunner`, but
   must not install/execute upstream packages, copy secrets or LM history, reuse
   draft citation mappings for polished text, advance guarded state, or publish.

@@ -1,4 +1,8 @@
-# Optional Retrieval Backends
+# Experimental Retrieval Backends
+
+Status: **Experimental**. These retrieval paths are in testing and are selected
+automatically for guarded evidence retrieval. They must fail closed when their
+documented contracts cannot be satisfied.
 
 Load this reference when guarded research needs evidence retrieval. Infer the
 mechanism from the user's available inputs: ordinary Agent-led research uses
@@ -35,6 +39,24 @@ ranked result rows with `search --host-results <jsonl>`. This makes the ranking
 and scores auditable without pretending the bundled script selected them.
 When one source has multiple chunks, each host result must include `chunk_id`;
 the adapter never guesses which snippet the host selected.
+
+Each host-results JSONL row requires a resolvable `source_id` and finite numeric
+`score`; `chunk_id` is optional only when that source has one indexed chunk:
+
+```json
+{"source_id":"S1","chunk_id":"S1#0001","score":0.92}
+```
+
+Persist the promised trace explicitly:
+
+```text
+python scripts/retrieval_backend.py index --backend host \
+  --corpus <corpus.jsonl> --output <run>/.storm-run/retrieval-index.json
+python scripts/retrieval_backend.py search \
+  --index <run>/.storm-run/retrieval-index.json --query <text> --top-k <n> \
+  --host-results <ranked-results.jsonl> \
+  --trace <run>/.storm-run/retrieval-log.jsonl
+```
 
 ### Lexical
 

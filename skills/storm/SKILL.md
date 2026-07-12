@@ -2,8 +2,9 @@
 name: storm
 description: >-
   Conduct source-grounded STORM research with perspective-guided retrieval,
-  standard four-file artifacts, citation verification, adaptation of a
-  user-provided local runner, and a prompt-native Co-STORM interactive preview.
+  standard four-file artifacts, citation verification, experimental retrieval
+  routing and official-run import, adaptation of a user-provided local runner,
+  and a prompt-native Co-STORM interactive preview.
   Use when the user explicitly asks for STORM or Co-STORM, a technical or
   literature survey, a cited background report, source comparison, an existing
   local STORM pipeline, research over a local corpus, import or synchronization
@@ -38,6 +39,15 @@ stages. Do not ask the user for an internal batch, backend, or adapter label.
 Select the capability from intent and describe it in user terms such as
 "search the available sources", "search this local corpus", or "import this
 existing STORM run".
+
+### Experimental capabilities
+
+The bundled retrieval routing is experimental and is the default evidence path
+for guarded research. Official Classic STORM output import is also experimental
+and is selected only when the user supplies or identifies an existing run.
+Both fail closed when their contracts cannot be met and must not be presented
+as stable equivalents of the guarded core workflow. When either is used,
+identify it as experimental in the completion report.
 
 ### Default retrieval intent
 
@@ -117,9 +127,9 @@ On every guarded Classic or Local Runner turn:
 6. Report Classic completion only when the state CLI returns the terminal
    phase/status, `next_action` is null, the citation audit is valid, and the
    four recorded artifact hashes still match the public files. The `completed`
-   transition atomically replaces the validated bytes and writes the hash
-   receipt to `.storm-run/publication.json`. Natural-language self-report is
-   never sufficient.
+   transition uses atomic per-file replacement, verifies the published bundle,
+   and writes the hash receipt to `.storm-run/publication.json`.
+   Natural-language self-report is never sufficient.
 
 When Python is unavailable or the user explicitly requests chat-only behavior,
 use prompt-only fallback and state that it cannot mechanically enforce
@@ -129,6 +139,9 @@ Co-STORM run uses the same state CLI with `mode=co-storm`.
 For each persisted Co-STORM warm-start, interactive, or conclusion turn, write
 a direct `.storm-run/turn-<n>.json` input matching
 `references/co-storm-turn.schema.json`, then call `storm_state.py record-turn`.
+`record-turn` is valid only after `warm_start_started`, while the run is in
+`WARM_START_RUNNING` or `INTERACTIVE`; follow the exact lifecycle in
+`references/co-storm.md`.
 Never hand-edit `.storm-run/co-storm-turns.jsonl`. The CLI validates turn order,
 stable participant identities, retrieval/source mappings, citations, final
 report intent, and the turn hash chain before lifecycle transitions. The
@@ -136,7 +149,7 @@ Classic artifact validator does not mechanically verify Co-STORM mind-map or
 report contents. Follow `references/co-storm.md` for the output contract and
 review source and citation support before reporting completion.
 
-Optional evidence retrieval uses `scripts/retrieval_backend.py`. Retrieval
+Experimental evidence retrieval uses `scripts/retrieval_backend.py`. Retrieval
 backend values (`host`, `lexical`, and `embedding`) are not execution backend
 values and never change `run.json.execution_backend`. Keep its index and rich
 result-row trace inside `.storm-run/`; each hit must retain a resolvable
@@ -147,10 +160,11 @@ default and may use lexical only when `--fallback lexical` is explicit and the
 fallback reason remains visible.
 
 Official Classic runner import uses `scripts/runner_adapter.py`. Probe
-`knowledge-storm` without importing it, require an explicit supported runner
-version and private runner output directory, then call `sync` once per guarded
-`next_action`. The adapter never installs or executes the runner, advances
-state, publishes artifacts, copies secrets/LM history content, or treats
+`knowledge-storm` without importing it, require a supported stable version from
+distribution metadata or explicit offline input plus a private runner output
+directory, then call `sync` once per guarded `next_action`.
+The adapter never installs or executes the runner, advances state, publishes
+artifacts, copies secrets/LM history content, or treats
 unreviewed claim candidates as citation approval. It requires a separately
 captured polished reference map and refuses to reuse draft citation mappings.
 
@@ -181,6 +195,8 @@ list: warm start with Basic fact writer, focused specialists, and Moderator;
 later turns show a named primary speaker, a different named respondent, and the
 Moderator no later than the second consecutive expert-led turn. Track
 `last_spoke_turn` and keep citations attached to the smallest supported claim.
+Suggested steering choices are not a closed menu; accept free-form user
+direction at every non-final turn.
 
 Use Local Runner STORM when the user asks to execute an official or existing
 implementation.
@@ -199,5 +215,6 @@ implementation.
 
 Keep the final chat response compact. Report the selected mode, resolved output
 paths or conversation-local result, validation evidence, recovery status, and
-unresolved evidence or tooling gaps. Never use an Agent's self-report as the
-only proof of completion.
+unresolved evidence or tooling gaps. Identify experimental retrieval routing or
+official-run import when used. Never use an Agent's self-report as the only
+proof of completion.

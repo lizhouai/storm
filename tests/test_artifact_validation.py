@@ -1,5 +1,6 @@
 import hashlib
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -8,6 +9,7 @@ from pathlib import Path
 
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[1] / "skills" / "storm" / "scripts"
+EXAMPLE_DIR = Path(__file__).resolve().parents[1] / "examples" / "classic-rag-evaluation"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 from validate_artifacts import validate_artifacts
@@ -22,6 +24,18 @@ ARTIFACT_NAMES = (
 
 
 class ArtifactValidationTests(unittest.TestCase):
+    def test_checked_in_classic_example_matches_the_current_artifact_contract(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output_dir = Path(directory)
+            for name in ARTIFACT_NAMES:
+                shutil.copy2(EXAMPLE_DIR / name, output_dir / name)
+
+            report = validate_artifacts(
+                output_dir, topic="RAG evaluation frameworks"
+            )
+
+            self.assertTrue(report["valid"], report["errors"])
+
     def test_valid_bundle_returns_sha256_for_each_public_artifact(self):
         with tempfile.TemporaryDirectory() as directory:
             output_dir = Path(directory)

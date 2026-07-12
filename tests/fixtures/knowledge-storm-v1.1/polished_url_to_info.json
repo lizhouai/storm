@@ -15,6 +15,12 @@
       "title": "Citation mapping contract",
       "description": "Polished citations need their own reference map.",
       "snippets": ["Draft and polished citation order can differ."]
+    },
+    "https://example.com/unused-after-polish": {
+      "url": "https://example.com/unused-after-polish",
+      "title": "Unused polished source",
+      "description": "The polishing step removed this citation.",
+      "snippets": ["Reference metadata may retain sources removed from the final index."]
     }
   }
 }

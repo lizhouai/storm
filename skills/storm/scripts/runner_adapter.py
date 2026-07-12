@@ -20,7 +20,10 @@ from typing import Any, Sequence
 ADAPTER_SCHEMA_VERSION = "1.0"
 RUNNER_DISTRIBUTION = "knowledge-storm"
 RUNNER_IMPORT = "knowledge_storm"
-REQUIREMENT = "knowledge-storm>=1.1.1,<1.2 (install only with current user approval)"
+REQUIREMENT = (
+    "knowledge-storm>=1.1.1,<1.2 stable releases "
+    "(install only with current user approval)"
+)
 RECOGNIZED_INPUTS = (
     "conversation_log.json",
     "raw_search_results.json",
@@ -238,7 +241,7 @@ def probe_dependency() -> dict[str, Any]:
 
 
 def supported_runner_version(version: str) -> bool:
-    match = re.fullmatch(r"1\.1\.(\d+)(?:[A-Za-z0-9.+-]*)?", version)
+    match = re.fullmatch(r"1\.1\.(\d+)", version)
     return match is not None and int(match.group(1)) >= 1
 
 
@@ -317,7 +320,8 @@ def build_manifest(source: Path, args: argparse.Namespace) -> dict[str, Any]:
         )
     if not supported_runner_version(runner_version):
         raise AdapterError(
-            f"unsupported knowledge-storm version {runner_version!r}; expected the 1.1.x contract"
+            f"unsupported knowledge-storm version {runner_version!r}; "
+            "expected >=1.1.1,<1.2 stable release contract"
         )
     input_files = input_file_inventory(source)
     config = read_source_json(source, "run_config.json", required=False)
@@ -431,10 +435,10 @@ def load_conversation(source: Path) -> tuple[list[dict[str, Any]], list[dict[str
             if not isinstance(turn, dict):
                 raise AdapterError(f"conversation turn {role!r}/{turn_number} must be an object")
             question = require_string(
-                turn.get("agent_utterance"), f"conversation turn {role!r}/{turn_number} question"
+                turn.get("user_utterance"), f"conversation turn {role!r}/{turn_number} question"
             )
             answer = require_string(
-                turn.get("user_utterance"), f"conversation turn {role!r}/{turn_number} answer"
+                turn.get("agent_utterance"), f"conversation turn {role!r}/{turn_number} answer"
             )
             raw_queries = turn.get("search_queries")
             if not isinstance(raw_queries, list) or not all(
@@ -665,7 +669,7 @@ def load_reference_map(
     info_map = raw["url_to_info"]
     if not isinstance(index_map, dict) or not index_map:
         raise AdapterError(f"{filename} requires a non-empty url_to_unified_index")
-    if not isinstance(info_map, dict) or set(info_map) != set(index_map):
+    if not isinstance(info_map, dict) or not set(index_map) <= set(info_map):
         raise AdapterError(f"{filename} URL maps are incomplete or inconsistent")
     indexes = list(index_map.values())
     if any(isinstance(index, bool) or not isinstance(index, int) for index in indexes):

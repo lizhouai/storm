@@ -126,6 +126,7 @@ class RunnerAdapterTests(unittest.TestCase):
         self.assertIsNone(missing["version"])
         self.assertFalse(missing["automatic_install"])
         self.assertIn("knowledge-storm", missing["requirement"])
+        self.assertIn("stable releases", missing["requirement"])
 
         with mock.patch.object(adapter.importlib.util, "find_spec", return_value=object()), mock.patch.object(
             adapter.metadata, "version", return_value="1.1.1"
@@ -282,13 +283,33 @@ class RunnerAdapterTests(unittest.TestCase):
             self.assertNotIn("<script>", draft_html)
             self.assertIn("&lt;script&gt;", draft_html)
             sources = json.loads((control / "sources.json").read_text(encoding="utf-8"))
+            self.assertEqual(len(sources["sources"]), 2)
             self.assertEqual(sources["sources"][0]["title"], "Citation mapping contract")
             self.assertEqual(sources["sources"][1]["title"], "Runner output contract")
+            self.assertNotIn("unused-after-polish", json.dumps(sources))
             interviews = [
                 json.loads(line)
                 for line in (control / "interviews.jsonl").read_text(encoding="utf-8").splitlines()
             ]
             self.assertTrue(all(query.strip() for row in interviews for query in row["queries"]))
+            self.assertEqual(
+                interviews[0]["question"],
+                "How is deterministic runner evidence captured?",
+            )
+            self.assertEqual(
+                interviews[0]["answer"],
+                "The official runner keeps structured conversation and search outputs.",
+            )
+            information_rows = [
+                json.loads(line)
+                for line in (control / "information-table.jsonl")
+                .read_text(encoding="utf-8")
+                .splitlines()
+            ]
+            self.assertEqual(
+                information_rows[0]["claim_supported"],
+                "The official runner keeps structured conversation and search outputs.",
+            )
 
     def test_adapter_rejects_wrong_mode_or_execution_backend(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -303,12 +324,14 @@ class RunnerAdapterTests(unittest.TestCase):
             rejected = self.sync(co_storm, expected_returncode=2)
             self.assertIn("Classic STORM", rejected.stderr)
 
-            unsupported = root / "unsupported-version"
-            self.init_run(unsupported)
-            rejected = self.sync(
-                unsupported, runner_version="2.0.0", expected_returncode=2
-            )
-            self.assertIn("expected the 1.1.x contract", rejected.stderr)
+            for version in ("1.1.0", "1.1.1garbage", "2.0.0"):
+                with self.subTest(version=version):
+                    unsupported = root / f"unsupported-version-{version}"
+                    self.init_run(unsupported)
+                    rejected = self.sync(
+                        unsupported, runner_version=version, expected_returncode=2
+                    )
+                    self.assertIn("expected >=1.1.1,<1.2", rejected.stderr)
 
             nested = root / "nested-source"
             self.init_run(nested)

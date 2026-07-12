@@ -7,26 +7,22 @@ An Agent Skill for STORM-style deep research: perspective-guided interviews, sou
 
 This skill packages the Stanford STORM research pattern as a reusable workflow for coding agents that support `SKILL.md`-based Agent Skills. It is based on the original [stanford-oval/storm](https://github.com/stanford-oval/storm) project.
 
-## What It Does
+## Why It Stands Out
 
-Use `storm` when you want an agent to produce standard STORM research artifacts instead of a shallow summary.
+Use `storm` when you need a traceable research workflow rather than a shallow
+one-shot summary.
 
-It helps the agent:
+| Highlight | What it provides |
+|---|---|
+| Perspective-guided depth | A basic fact writer, focused viewpoints, simulated interviews, and an evidence-refined outline |
+| Auditable evidence chain | Source IDs, query and evidence records, inline citations, reference checks, and visible evidence gaps |
+| Guarded and recoverable | Versioned state, one enforced next action, staging, artifact hashes, and retry-safe publication for file-producing runs |
+| Interactive exploration | A prompt-native Co-STORM preview with visible simulated participants, a cited mind map, and free-form steering |
+| Portable core | A standard Agent Skill layout and bundled runtime scripts with no third-party Python dependency |
+| Flexible evidence paths | Experimental Agent-ranked, local lexical, explicit embedding, and official Classic output-import paths |
 
-- define the research scope, audience, assumptions, and source boundaries
-- generate multiple writer perspectives, including a basic fact writer
-- run search-backed simulated interviews from each perspective
-- collect evidence into an information table
-- use host-ranked evidence, deterministic multilingual lexical search, or an
-  explicitly configured embedding provider without adding a base dependency
-- import an official Classic `STORMWikiRunner` output tree phase by phase when
-  that runner is already available in a separately authorized environment
-- refine an outline from the gathered evidence
-- write section-by-section with inline citations
-- produce the standard STORM artifact bundle
-- verify citation coverage, unsupported claims, source gaps, and stale-source risks
-
-The default mode is classic STORM. A prompt-native Co-STORM preview is available for interactive exploration, roundtable discussion, user steering, and mind-map driven research. It is an agent workflow, not a bundled `knowledge-storm` runner.
+Classic STORM is the default. The Co-STORM experience is an Agent workflow, not
+a bundled `knowledge-storm` runner.
 
 ## See It in Action
 
@@ -38,7 +34,7 @@ One Classic STORM prompt progresses through a topic-only outline, an evidence-re
 
 | Mode | What remains visible | Example |
 |---|---|---|
-| Classic STORM | Four stable research artifacts, primary sources, and verification notes | [Explore the complete RAG evaluation bundle](examples/classic-rag-evaluation/README.md) |
+| Classic STORM | Four stable research artifacts, source-grounded evidence, and verification notes | [Explore the complete RAG evaluation bundle](examples/classic-rag-evaluation/README.md) |
 | Prompt-native Co-STORM preview | Simulated participant handoffs, cited mind-map updates, open questions, and user steering | [Read the compact RAG evaluation roundtable](examples/co-storm-rag-evaluation/README.md) · [Open the end-to-end RAG technology report](https://lizhouai.github.io/storm-research-skill/examples/co-storm-rag-technology/rag-technology-research-report.html) |
 
 These examples are source-grounded output snapshots, not benchmark claims. The Co-STORM example remains a prompt-native preview and does not claim to run the upstream `CoStormRunner`.
@@ -55,56 +51,27 @@ This installs the skill for the current project. Add `-g` only when you intentio
 
 ## Usage
 
-Ask your agent to use the `storm` skill. In Codex, you can call it explicitly:
+Use `storm` through your agent or in Codex. Describe the goal and inputs; it
+selects the route.
 
-```text
-$storm Research the current state of AI code review tools.
-```
+| Goal | Example prompt | Result |
+|---|---|---|
+| Classic research | `$storm Research the current state of AI code review tools.` | Four validated HTML artifacts under `.results/<topic-slug>/` |
+| Chat-only brief | `Use storm to summarize current RAG evaluation methods. Return the answer in chat and create no files.` | Compact cited synthesis with reduced validation |
+| Local corpus | `Use storm to synthesize this repository. Do not search outside the provided material.` | Corpus-restricted research within the source boundary |
+| Co-STORM roundtable | `Use the prompt-native Co-STORM preview to explore embodied AI business models.` | A simulated, cited discussion and evolving mind map |
+| Existing runner | `Run the STORM project in ./vendor/storm and validate its outputs. Do not install dependencies.` | Authorized local execution mapped into the guarded artifact lifecycle |
+| Official Classic output import (Experimental) | `Import the completed official Classic STORM run from D:/private/storm-output.` | Guarded phased import of a compatible run |
 
-By default this creates the standard HTML artifact bundle under `.results/<topic-slug>/`. The guarded Classic publication path currently validates HTML only; for another format, use chat-only output and accept the reduced mechanical enforcement boundary. See [Output Format](#output-format).
+Co-STORM supports free-form steering; suggestions are optional. Say
+`Conclude the roundtable` for an in-chat report, or add a format and destination
+to write the requested mind map and/or report. Ask to persist, resume, or hand
+off when durable turn state is required.
 
-General agent prompt:
-
-```text
-Use the storm skill to write a source-grounded background review of open-source LLM evaluation frameworks.
-```
-
-Prompt-native Co-STORM preview:
-
-```text
-Use the prompt-native Co-STORM preview to explore commercial paths for embodied AI. Start with a roundtable and maintain a mind-map style structure.
-```
-
-In the Co-STORM preview, the agent keeps a conversation-local board with a cited mind map, discourse history, participants, open questions, sources, unused evidence, and current focus. The simulated participants are visible in the response: the warm start gives each active expert a labeled contribution and a moderator handoff, while later turns show a named primary speaker plus a distinct respondent and periodic moderator intervention. Choice-first steering keeps the user in control. When persistence is explicitly requested, the guarded state CLI records schema-checked turns in an atomic hash-linked log; ordinary conversation mode remains prompt-only. If state or citation mappings are lost, the agent must disclose the gap and rebuild them before continuing.
-
-> [!IMPORTANT]
-> The two or three steering options shown at the end of each round are suggestions, not a closed menu. If none fits, ignore them and reply in your own words with any question, direction, constraint, or request to conclude; the next round follows that free-form input.
-
-### Ending a Co-STORM Roundtable
-
-No special command or fixed round count is required. Any clear instruction to
-conclude the discussion triggers the final-report path. For an in-chat report,
-say:
-
-```text
-Conclude the Co-STORM roundtable now. Synthesize the current mind map, cited evidence, disagreements, uncertainties, and open questions into the final report.
-```
-
-To save the result as files, include the format and destination explicitly:
-
-```text
-Conclude the Co-STORM roundtable and save the cited mind map and final report as Markdown under .results/embodied-ai/.
-```
-
-Without an explicit file request, the final report remains in the conversation.
-With one, the skill writes the requested one or both Co-STORM artifacts described
-in [Output Format](#output-format).
-
-Local-document constrained research:
-
-```text
-Use storm to synthesize the documents in this repository. Restrict retrieval to the provided material unless web research is explicitly needed.
-```
+**Experimental:** automatic retrieval routing (Agent-ranked, local lexical, or
+explicit embedding) is the default for guarded evidence retrieval. Official
+Classic output import activates only for an existing run. Both fail closed and
+may change before becoming stable.
 
 ## Output Format
 
@@ -113,7 +80,7 @@ Guarded Classic research produces this standard HTML artifact bundle under `.res
 - `direct_gen_outline.html`: topic-only outline before evidence refinement
 - `storm_gen_outline.html`: evidence-refined outline
 - `storm_gen_article.html`: cited draft article
-- `storm_gen_article_polished.html`: polished final article with references and verification notes
+- `storm_gen_article_polished.html`: polished final article with references
 
 If you explicitly ask for chat-only or no files, the skill can instead return a compact in-chat brief with perspectives, query log, citations, references, and verification notes.
 
@@ -167,13 +134,14 @@ runtime when Python is available. A versioned `.storm-run/run.json` and event
 log define the only next action; zero-dependency scripts enforce state
 transitions, artifact structure, hashes, and citation mappings before the run
 can reach `COMPLETE`. Phase outputs remain under `.storm-run/staging`, so the
-four public files stay absent before validation. The final transition atomically replaces the validated
-artifact bytes and records their hashes in `.storm-run/publication.json`;
+four public files stay absent before validation. The final transition publishes
+each validated file through atomic replacement and records the bundle hashes in
+`.storm-run/publication.json`;
 completed runs revalidate that receipt. Prompt-only fallback remains available when Python is
 unavailable or the user explicitly requests chat-only output, with the reduced
 enforcement boundary stated in the response.
 
-Optional retrieval is also bundled without a model dependency. Host mode
+Experimental retrieval is bundled without a model dependency. Host mode
 records rankings supplied by the current Agent or runner, lexical mode provides
 deterministic zero-dependency BM25 with Unicode/CJK terms, and embedding mode
 requires an explicit trusted provider, model name, and provider version. An
@@ -181,8 +149,8 @@ unavailable embedding provider fails closed unless lexical fallback is
 explicitly selected; the requested/effective backend and reason remain in the
 internal retrieval trace.
 
-An optional zero-dependency adapter can probe an existing `knowledge-storm`
-installation without importing it and map fixed Classic 1.1.x runner outputs
+An experimental zero-dependency adapter can probe an existing `knowledge-storm`
+installation without importing it and map stable `>=1.1.1,<1.2` Classic runner outputs
 into the same guarded lifecycle. It reads one `next_action` at a time, redacts
 runner configuration, hashes rather than copies LM history, escapes upstream
 text into staging HTML, and leaves state advancement, citation decisions, and
@@ -278,7 +246,7 @@ storm-research-skill/
 - `skills/storm/agents/openai.yaml` provides display metadata for OpenAI-style agent surfaces.
 - `assets/social-preview.png` is the upload-ready repository social preview; the `Fact Researcher` label is visual shorthand for the canonical Basic fact writer role.
 - `examples/` contains a complete Classic artifact bundle, a compact prompt-native Co-STORM interaction, and an end-to-end Co-STORM report run.
-- `evals/baseline-results.json` preserves the historical pre-runtime B0 behavior snapshot; it is not the current executable-canary result.
+- `evals/baseline-results.json` preserves the historical pre-runtime behavior snapshot; it is not the current executable-canary result.
 - `evals/cases.json` defines executable forward-eval cases and objective oracle assertions for critical modes and safety boundaries.
 - `scripts/run_forward_evals.py` runs isolated offline contract canaries and can invoke an explicitly configured real-Agent command without making that nondeterministic path a release gate.
 - `scripts/validate_skill.py` enforces the repository contract without third-party Python dependencies.

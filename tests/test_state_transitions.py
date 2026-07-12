@@ -499,10 +499,11 @@ class StormStateCliTests(unittest.TestCase):
             with mock.patch.object(
                 STATE_MODULE, "atomic_replace_bytes", side_effect=fail_on_second
             ):
-                with self.assertRaisesRegex(
-                    STATE_MODULE.StateError, "atomic Classic publication failed"
-                ):
+                with self.assertRaises(STATE_MODULE.StateError) as caught:
                     STATE_MODULE.publish_classic_artifacts(run_path, state)
+
+            self.assertIn("atomic Classic publication failed", str(caught.exception))
+            self.assertIn(str(run_path.parent / "staging"), str(caught.exception))
 
             self.assertEqual(list(output.glob("*.html")), [])
             self.assertFalse((run_path.parent / "publication.json").exists())

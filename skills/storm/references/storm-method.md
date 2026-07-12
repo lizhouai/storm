@@ -7,8 +7,8 @@ open this file, but should then follow only the relevant links:
 - Classic research and chat brief: `classic-storm.md`
 - Prompt-native Co-STORM preview: `co-storm.md`
 - Existing local runner execution: `local-runner.md`
-- Optional official Classic runner import: `knowledge-storm-adapter.md`
-- Optional host, lexical, and embedding retrieval: `retrieval-backends.md`
+- Experimental retrieval routing: `retrieval-backends.md`
+- Experimental official Classic runner import: `knowledge-storm-adapter.md`
 - Four public files, staging, HTML, UTF-8, and citation gates: `artifact-contract.md`
 - Retrieval, checkpoint, runner, and side-effect safety: `safety-contract.md`
 - Versioned guarded run state: `run-state.schema.json`

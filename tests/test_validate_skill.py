@@ -88,6 +88,17 @@ class OpenAIMetadataRegressionTests(unittest.TestCase):
         self.assertIn("$storm", fields["default_prompt"])
         self.assertEqual(VALIDATOR.FAILURES, [])
 
+    def test_default_prompt_discloses_experimental_capabilities(self) -> None:
+        fields = VALIDATOR.parse_openai_interface(
+            (VALIDATOR.SKILL_DIR / "agents" / "openai.yaml").read_text(
+                encoding="utf-8"
+            )
+        )
+
+        self.assertIn("Retrieval routing", fields["default_prompt"])
+        self.assertIn("official Classic output import", fields["default_prompt"])
+        self.assertIn("experimental", fields["default_prompt"].lower())
+
 
 class UTF8RegressionTests(unittest.TestCase):
     def test_legitimate_cjk_characters_are_not_mojibake_by_themselves(self) -> None:
@@ -166,6 +177,7 @@ class GuardedRoutingRegressionTests(unittest.TestCase):
         self.assertIn("polished_url_to_info.json", adapter_text)
         self.assertIn("never copies prompts", adapter_text)
         self.assertIn("Classic `STORMWikiRunner`", adapter_text)
+        self.assertIn(">=1.1.1,<1.2", adapter_text)
 
     def test_optional_features_route_from_user_intent_without_batch_labels(self) -> None:
         skill_text = VALIDATOR.SKILL_FILE.read_text(encoding="utf-8")
@@ -182,9 +194,90 @@ class GuardedRoutingRegressionTests(unittest.TestCase):
         self.assertIn("explicit embedding provider", skill_text)
         self.assertIn("official Classic STORM output directory", skill_text)
         self.assertIn("Do not ask the user for an internal batch", skill_text)
+        self.assertIn("default evidence path", skill_text)
+        self.assertIn('"chunk_id":"S1#0001"', retrieval_text)
+        self.assertNotIn("remain optional", retrieval_text)
         self.assertNotRegex(
             "\n".join((skill_text, retrieval_text, adapter_text)), r"\bB[56]\b"
         )
+
+    def test_public_docs_mark_new_capabilities_experimental_and_keep_usage_compact(
+        self,
+    ) -> None:
+        readme_text = (ROOT / "README.md").read_text(encoding="utf-8")
+        skill_text = VALIDATOR.SKILL_FILE.read_text(encoding="utf-8")
+        retrieval_text = (
+            VALIDATOR.SKILL_DIR / "references" / "retrieval-backends.md"
+        ).read_text(encoding="utf-8")
+        adapter_text = (
+            VALIDATOR.SKILL_DIR / "references" / "knowledge-storm-adapter.md"
+        ).read_text(encoding="utf-8")
+        openai_text = (VALIDATOR.SKILL_DIR / "agents" / "openai.yaml").read_text(
+            encoding="utf-8"
+        )
+
+        for text in (
+            readme_text,
+            skill_text,
+            openai_text,
+            retrieval_text,
+            adapter_text,
+        ):
+            self.assertIn("experimental", text.lower())
+        for highlight in (
+            "## Why It Stands Out",
+            "Perspective-guided depth",
+            "Auditable evidence chain",
+            "Guarded and recoverable",
+            "Interactive exploration",
+            "Portable core",
+            "Flexible evidence paths",
+        ):
+            self.assertIn(highlight, readme_text)
+        self.assertNotRegex(
+            "\n".join(
+                (readme_text, skill_text, openai_text, retrieval_text, adapter_text)
+            ),
+            r"\bB[56]\b",
+        )
+
+        usage_text = readme_text.split("## Usage", 1)[1].split(
+            "## Output Format", 1
+        )[0]
+        for phrase in (
+            "$storm",
+            "Classic research",
+            "Chat-only brief",
+            "Local corpus",
+            "Co-STORM roundtable",
+            "Existing runner",
+            "Official Classic output import",
+            "free-form steering",
+        ):
+            self.assertIn(phrase, usage_text)
+        self.assertNotRegex(usage_text, r"[\u3400-\u9fff]")
+        self.assertLessEqual(len(usage_text.split()), 260)
+
+    def test_co_storm_docs_accept_free_form_steering_and_define_persistence_order(
+        self,
+    ) -> None:
+        co_storm_text = (
+            VALIDATOR.SKILL_DIR / "references" / "co-storm.md"
+        ).read_text(encoding="utf-8")
+        example_text = (
+            ROOT / "examples" / "co-storm-rag-evaluation" / "README.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("free-form steering", co_storm_text)
+        self.assertIn("free-form", example_text)
+        for event in (
+            "warm_start_started",
+            "warm_start_completed",
+            "reporting_started",
+            "verified",
+            "completed",
+        ):
+            self.assertIn(event, co_storm_text)
 
 
 class ForwardEvalSchemaRegressionTests(unittest.TestCase):

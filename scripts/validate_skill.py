@@ -501,6 +501,10 @@ def validate_eval_cases() -> None:
 
 def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
     readme_text = read_utf8(ROOT / "README.md")
+    contributing_text = read_utf8(ROOT / "CONTRIBUTING.md")
+    co_storm_example_text = read_utf8(
+        ROOT / "examples" / "co-storm-rag-evaluation" / "README.md"
+    )
     method_text = read_utf8(SKILL_DIR / "references" / "storm-method.md")
     classic_text = read_utf8(SKILL_DIR / "references" / "classic-storm.md")
     co_storm_text = read_utf8(SKILL_DIR / "references" / "co-storm.md")
@@ -527,6 +531,8 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
             runner_adapter_text,
             retrieval_text,
             readme_text,
+            contributing_text,
+            co_storm_example_text,
             openai_text,
         )
     )
@@ -540,6 +546,57 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
         "does not bundle" in readme_text.lower()
         or "not a bundled" in readme_text.lower(),
         "README must disclose that no executable Co-STORM runner is bundled",
+    )
+
+    experimental_docs = {
+        "README": readme_text,
+        "SKILL.md": skill_text,
+        "OpenAI metadata": openai_text,
+        "retrieval reference": retrieval_text,
+        "official runner adapter reference": runner_adapter_text,
+    }
+    for label, text in experimental_docs.items():
+        require(
+            "experimental" in text.lower(),
+            f"{label} must mark retrieval routing and official-run import as experimental",
+        )
+    require(
+        re.search(r"\bB[56]\b", "\n".join(experimental_docs.values())) is None,
+        "public documentation must not expose internal batch labels B5 or B6",
+    )
+
+    usage_parts = readme_text.split("## Usage", 1)
+    require(len(usage_parts) == 2, "README must contain a Usage section")
+    usage_text = (
+        usage_parts[1].split("## Output Format", 1)[0]
+        if len(usage_parts) == 2
+        else ""
+    )
+    required_usage_phrases = {
+        "$storm",
+        "Classic research",
+        "Chat-only brief",
+        "Local corpus",
+        "Co-STORM roundtable",
+        "Existing runner",
+        "Official Classic output import",
+        "free-form",
+    }
+    missing_usage_phrases = sorted(
+        phrase for phrase in required_usage_phrases if phrase not in usage_text
+    )
+    require(
+        not missing_usage_phrases,
+        "README Usage must cover every supported user route; missing "
+        f"{missing_usage_phrases}",
+    )
+    require(
+        re.search(r"[\u3400-\u9fff]", usage_text) is None,
+        "README Usage must remain in English",
+    )
+    require(
+        len(usage_text.split()) <= 260,
+        "README Usage must remain concise at no more than 260 words",
     )
 
     forbidden_claims = {
@@ -582,6 +639,12 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
         "Co-STORM contract must render visible primary and respondent voices",
     )
     require(
+        "free-form steering" in readme_text.lower()
+        and "free-form steering" in co_storm_text.lower()
+        and "free-form" in co_storm_example_text.lower(),
+        "Co-STORM documentation and example must accept free-form steering",
+    )
+    require(
         "last_spoke_turn" in skill_text
         and "last_spoke_turn" in co_storm_text
         and "second consecutive expert-led turn" in co_storm_text.lower(),
@@ -605,6 +668,19 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
         "persistent Co-STORM must route structured turns through the state CLI",
     )
     require(
+        all(
+            event in co_storm_text
+            for event in (
+                "warm_start_started",
+                "warm_start_completed",
+                "reporting_started",
+                "verified",
+                "completed",
+            )
+        ),
+        "persistent Co-STORM docs must define the executable lifecycle order",
+    )
+    require(
         "direct_gen_outline.html" in artifact_text
         and "storm_gen_article_polished.html" in artifact_text
         and "guarded publication path supports html only" in artifact_text.lower(),
@@ -624,7 +700,7 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
         "scripts/retrieval_backend.py" in skill_text
         and "retrieval-backends.md" in skill_text
         and re.search(r"not execution\s+backend\s+values", skill_text.lower()) is not None,
-        "optional retrieval must be bundled without changing execution backend semantics",
+        "experimental retrieval must be bundled without changing execution backend semantics",
     )
     require(
         "zero-dependency deterministic fallback" in retrieval_text.lower()
@@ -633,9 +709,26 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
         "retrieval contract must keep lexical zero-dependency and embedding fallback explicit",
     )
     require(
+        "default evidence path" in skill_text.lower()
+        and re.search(r"selected\s+automatically", retrieval_text.lower()) is not None
+        and "remain optional" not in retrieval_text.lower(),
+        "experimental retrieval status must agree with its default guarded routing",
+    )
+    require(
+        '"source_id"' in retrieval_text
+        and '"score"' in retrieval_text
+        and '"chunk_id":"S1#0001"' in retrieval_text
+        and "--host-results" in retrieval_text
+        and "--trace" in retrieval_text,
+        "host retrieval docs must define executable ranked input and trace persistence",
+    )
+    require(
         "scripts/runner_adapter.py" in skill_text
         and "knowledge-storm-adapter.md" in skill_text
-        and "never installs or executes the runner" in skill_text.lower(),
+        and re.search(
+            r"never\s+installs or executes the runner", skill_text.lower()
+        )
+        is not None,
         "official runner adapter must remain optional and non-executing",
     )
     require(
@@ -644,6 +737,19 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
         and "never copies prompts" in runner_adapter_text.lower()
         and "classic `stormwikirunner`" in runner_adapter_text.lower(),
         "official runner adapter must preserve polished citations, secrets, and Classic scope",
+    )
+    require(
+        ">=1.1.1,<1.2" in runner_adapter_text
+        and ">=1.1.1,<1.2" in readme_text,
+        "official runner documentation must match the supported stable version range",
+    )
+    require(
+        "execute in-process" in contributing_text.lower()
+        and re.search(
+            r"may\s+have arbitrary side effects", contributing_text.lower()
+        )
+        is not None,
+        "contributor docs must describe trusted embedding provider execution accurately",
     )
     require(
         "compatibility index" in method_text.lower()
