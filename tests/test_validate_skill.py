@@ -125,6 +125,7 @@ class GuardedRoutingRegressionTests(unittest.TestCase):
             "scripts/validate_artifacts.py",
             "scripts/audit_citations.py",
             "scripts/retrieval_backend.py",
+            "scripts/runner_adapter.py",
         ):
             self.assertIn(runtime_path, skill_text)
         self.assertIn("execute exactly `next_action`", skill_text)
@@ -153,6 +154,18 @@ class GuardedRoutingRegressionTests(unittest.TestCase):
         self.assertIn("zero-dependency deterministic fallback", retrieval_text)
         self.assertIn("explicit `--fallback lexical`", retrieval_text)
         self.assertIn("never installs", retrieval_text)
+
+    def test_official_runner_adapter_is_optional_secret_safe_and_classic_only(self) -> None:
+        skill_text = VALIDATOR.SKILL_FILE.read_text(encoding="utf-8")
+        adapter_text = (
+            VALIDATOR.SKILL_DIR / "references" / "knowledge-storm-adapter.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("scripts/runner_adapter.py", skill_text)
+        self.assertIn("never installs or executes the runner", skill_text)
+        self.assertIn("polished_url_to_info.json", adapter_text)
+        self.assertIn("never copies prompts", adapter_text)
+        self.assertIn("Classic `STORMWikiRunner`", adapter_text)
 
 
 class ForwardEvalSchemaRegressionTests(unittest.TestCase):

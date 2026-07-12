@@ -30,6 +30,8 @@ index at `references/storm-method.md` points older callers to the split files.
 Load `references/retrieval-backends.md` only when the user selects a retrieval
 backend, a local corpus needs deterministic lexical search, or embedding is
 explicitly requested.
+Load `references/knowledge-storm-adapter.md` only when the user asks to adapt an
+installed or separately executed official Classic `STORMWikiRunner`.
 
 If the prompt is Chinese, use Chinese by default while preserving standard
 English technical terms. Keep the display topic separate from filesystem slugs.
@@ -114,6 +116,14 @@ zero-dependency deterministic fallback, and embedding requires a trusted
 explicit provider/model/version. An unavailable embedding provider fails by
 default and may use lexical only when `--fallback lexical` is explicit and the
 fallback reason remains visible.
+
+Official Classic runner import uses `scripts/runner_adapter.py`. Probe
+`knowledge-storm` without importing it, require an explicit supported runner
+version and private runner output directory, then call `sync` once per guarded
+`next_action`. The adapter never installs or executes the runner, advances
+state, publishes artifacts, copies secrets/LM history content, or treats
+unreviewed claim candidates as citation approval. It requires a separately
+captured polished reference map and refuses to reuse draft citation mappings.
 
 ## Stable Deliverables
 

@@ -25,3 +25,9 @@ script, environment, or installed STORM implementation.
 If the user asks for an official Co-STORM implementation, use this route and
 verify that implementation rather than presenting the prompt-native preview as
 an executable runtime.
+
+For the official Classic `STORMWikiRunner`, additionally load
+`knowledge-storm-adapter.md` and use `../scripts/runner_adapter.py` to probe and
+import its private output directory one guarded phase at a time. Do not use the
+Classic adapter for `CoStormRunner`, and do not reuse the draft reference map
+for a polished article.

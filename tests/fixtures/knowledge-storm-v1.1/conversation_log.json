@@ -1,0 +1,38 @@
+[
+  {
+    "perspective": "Basic fact writer",
+    "dlg_turns": [
+      {
+        "agent_utterance": "How is deterministic runner evidence captured?",
+        "user_utterance": "The official runner keeps structured conversation and search outputs.",
+        "search_queries": ["knowledge storm structured output", ""],
+        "search_results": [
+          {
+            "url": "https://example.com/runner",
+            "title": "Runner output contract",
+            "description": "The runner writes structured research artifacts.",
+            "snippets": ["Official runner output can be mapped into guarded evidence."]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "perspective": "Reliability specialist",
+    "dlg_turns": [
+      {
+        "agent_utterance": "How are citation mappings kept reliable?",
+        "user_utterance": "A captured polished reference map is required before publication.",
+        "search_queries": ["polished citation reference mapping"],
+        "search_results": [
+          {
+            "url": "https://example.com/citations",
+            "title": "Citation mapping contract",
+            "description": "Polished citations need their own reference map.",
+            "snippets": ["Draft and polished citation order can differ."]
+          }
+        ]
+      }
+    ]
+  }
+]

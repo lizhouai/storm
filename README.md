@@ -19,6 +19,8 @@ It helps the agent:
 - collect evidence into an information table
 - use host-ranked evidence, deterministic multilingual lexical search, or an
   explicitly configured embedding provider without adding a base dependency
+- import an official Classic `STORMWikiRunner` output tree phase by phase when
+  that runner is already available in a separately authorized environment
 - refine an outline from the gathered evidence
 - write section-by-section with inline citations
 - produce the standard STORM artifact bundle
@@ -179,6 +181,15 @@ unavailable embedding provider fails closed unless lexical fallback is
 explicitly selected; the requested/effective backend and reason remain in the
 internal retrieval trace.
 
+An optional zero-dependency adapter can probe an existing `knowledge-storm`
+installation without importing it and map fixed Classic 1.1.x runner outputs
+into the same guarded lifecycle. It reads one `next_action` at a time, redacts
+runner configuration, hashes rather than copies LM history, escapes upstream
+text into staging HTML, and leaves state advancement, citation decisions, and
+publication to the existing guarded CLIs. The adapter does not bundle or
+install `knowledge-storm`/DSPy and requires the polished article's separately
+captured reference map instead of assuming draft citation ids still match.
+
 The prompt-native Co-STORM preview is used only when you explicitly ask for interactive exploration, roundtable discussion, user steering, or a mind map. It starts with a mini STORM warm start, renders role-attributed simulated discussion instead of hiding participants in internal state, maintains a cited mind map during the conversation, and returns the final report in chat or writes only requested artifacts when you ask to conclude. The Co-STORM reference describes the portable prompt protocol, but this repository does not bundle DSPy modules, independently running expert agents, or an executable Co-STORM runner.
 
 For persistent Co-STORM runs, `record-turn` validates turn order, stable
@@ -249,6 +260,7 @@ storm-research-skill/
         co-storm.md
         co-storm-turn.schema.json
         local-runner.md
+        knowledge-storm-adapter.md
         retrieval-backends.md
         run-state.schema.json
         safety-contract.md
@@ -256,6 +268,7 @@ storm-research-skill/
       scripts/
         audit_citations.py
         retrieval_backend.py
+        runner_adapter.py
         storm_state.py
         validate_artifacts.py
 ```

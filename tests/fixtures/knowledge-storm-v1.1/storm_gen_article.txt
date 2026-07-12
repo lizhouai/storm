@@ -1,0 +1,7 @@
+# Test Topic
+
+Deterministic runner evidence is captured [1]. <script>alert("unsafe")</script>
+
+## Reliability
+
+Draft citation mappings remain explicit [2].

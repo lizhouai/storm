@@ -1,0 +1,18 @@
+{
+  "https://example.com/runner": {
+    "url": "https://example.com/runner",
+    "title": "Runner output contract",
+    "description": "The runner writes structured research artifacts.",
+    "snippets": ["Official runner output can be mapped into guarded evidence."],
+    "meta": {},
+    "citation_uuid": 1
+  },
+  "https://example.com/citations": {
+    "url": "https://example.com/citations",
+    "title": "Citation mapping contract",
+    "description": "Polished citations need their own reference map.",
+    "snippets": ["Draft and polished citation order can differ."],
+    "meta": {},
+    "citation_uuid": 2
+  }
+}

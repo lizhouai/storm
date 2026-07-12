@@ -25,6 +25,7 @@ REFERENCE_FILES = {
     "references/co-storm.md",
     "references/co-storm-turn.schema.json",
     "references/local-runner.md",
+    "references/knowledge-storm-adapter.md",
     "references/retrieval-backends.md",
     "references/run-state.schema.json",
     "references/safety-contract.md",
@@ -33,6 +34,7 @@ REFERENCE_FILES = {
 RUNTIME_FILES = {
     "scripts/audit_citations.py",
     "scripts/retrieval_backend.py",
+    "scripts/runner_adapter.py",
     "scripts/storm_state.py",
     "scripts/validate_artifacts.py",
 }
@@ -508,6 +510,9 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
     artifact_text = read_utf8(SKILL_DIR / "references" / "artifact-contract.md")
     safety_text = read_utf8(SKILL_DIR / "references" / "safety-contract.md")
     local_runner_text = read_utf8(SKILL_DIR / "references" / "local-runner.md")
+    runner_adapter_text = read_utf8(
+        SKILL_DIR / "references" / "knowledge-storm-adapter.md"
+    )
     retrieval_text = read_utf8(SKILL_DIR / "references" / "retrieval-backends.md")
     combined = "\n".join(
         (
@@ -519,6 +524,7 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
             artifact_text,
             safety_text,
             local_runner_text,
+            runner_adapter_text,
             retrieval_text,
             readme_text,
             openai_text,
@@ -625,6 +631,19 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
         and "explicit `--fallback lexical`" in retrieval_text.lower()
         and "never installs" in retrieval_text.lower(),
         "retrieval contract must keep lexical zero-dependency and embedding fallback explicit",
+    )
+    require(
+        "scripts/runner_adapter.py" in skill_text
+        and "knowledge-storm-adapter.md" in skill_text
+        and "never installs or executes the runner" in skill_text.lower(),
+        "official runner adapter must remain optional and non-executing",
+    )
+    require(
+        "polished_url_to_info.json" in runner_adapter_text
+        and "never guesses" in runner_adapter_text.lower()
+        and "never copies prompts" in runner_adapter_text.lower()
+        and "classic `stormwikirunner`" in runner_adapter_text.lower(),
+        "official runner adapter must preserve polished citations, secrets, and Classic scope",
     )
     require(
         "compatibility index" in method_text.lower()

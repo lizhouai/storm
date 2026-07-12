@@ -1,0 +1,7 @@
+# Test Topic
+
+Polished citation mapping is verified independently [1].
+
+## Evidence
+
+Deterministic runner evidence remains traceable [2].

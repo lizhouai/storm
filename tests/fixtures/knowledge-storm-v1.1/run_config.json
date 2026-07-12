@@ -1,0 +1,14 @@
+{
+  "conv_simulator_lm": {
+    "model": "fixture-model",
+    "temperature": 0.0,
+    "max_tokens": 2048,
+    "api_key": "TOP-SECRET-API-KEY",
+    "api_base": "https://private.example.invalid/v1"
+  },
+  "retriever": {
+    "name": "untrusted-config-name",
+    "search_top_k": 999,
+    "token": "TOP-SECRET-RETRIEVER-TOKEN"
+  }
+}
