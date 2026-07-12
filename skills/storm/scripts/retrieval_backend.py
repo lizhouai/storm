@@ -5,8 +5,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import importlib
-import importlib.util
 import json
 import math
 import os
@@ -16,15 +14,14 @@ import tempfile
 import unicodedata
 from collections import Counter
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import Any, Sequence
 
 
 SCHEMA_VERSION = "1.0"
-BACKENDS = ("host", "lexical", "embedding")
+BACKENDS = ("host", "lexical")
 ALGORITHMS = {
     "host": "host-ranked-passthrough-v1",
     "lexical": "bm25-unicode-v1",
-    "embedding": "cosine-similarity-v1",
 }
 DOCUMENT_FIELDS = {"source_id", "title", "url", "text"}
 INDEX_FIELDS = {
@@ -40,15 +37,10 @@ INDEX_FIELDS = {
     "chunks",
 }
 CHUNK_FIELDS = {"source_id", "chunk_id", "title", "url", "snippet", "snippet_hash"}
-EmbeddingProvider = Callable[..., list[list[float]]]
 
 
 class RetrievalError(ValueError):
     """Raised when retrieval inputs or optional backends are unsafe or invalid."""
-
-
-class EmbeddingUnavailableError(RetrievalError):
-    """Raised only when an explicitly selected embedding provider cannot be loaded."""
 
 
 def canonical_json(value: Any) -> str:
@@ -238,75 +230,6 @@ def lexical_scores(chunks: list[dict[str, Any]], query: str) -> list[float]:
     return scores
 
 
-def load_embedding_provider(specification: str | None) -> EmbeddingProvider:
-    if not specification:
-        raise EmbeddingUnavailableError("embedding backend requires --embedding-provider")
-    try:
-        module_name, attribute = specification.rsplit(":", 1)
-    except ValueError as exc:
-        raise EmbeddingUnavailableError(
-            "embedding provider must use module:callable or path.py:callable"
-        ) from exc
-    try:
-        candidate = Path(module_name)
-        if candidate.suffix == ".py":
-            if not candidate.is_file():
-                raise EmbeddingUnavailableError(
-                    f"embedding provider file does not exist: {candidate}"
-                )
-            import_spec = importlib.util.spec_from_file_location(
-                f"storm_embedding_{sha256_text(str(candidate.resolve()))[:12]}", candidate
-            )
-            if import_spec is None or import_spec.loader is None:
-                raise EmbeddingUnavailableError(f"cannot load embedding provider: {candidate}")
-            module = importlib.util.module_from_spec(import_spec)
-            import_spec.loader.exec_module(module)
-        else:
-            module = importlib.import_module(module_name)
-        provider = getattr(module, attribute)
-    except EmbeddingUnavailableError:
-        raise
-    except Exception as exc:
-        raise EmbeddingUnavailableError(f"embedding provider is unavailable: {exc}") from exc
-    if not callable(provider):
-        raise RetrievalError("embedding provider target must be callable")
-    return provider
-
-
-def validate_vectors(value: Any, expected_count: int, label: str) -> list[list[float]]:
-    if not isinstance(value, list) or len(value) != expected_count:
-        raise RetrievalError(f"{label} must return one vector per input text")
-    vectors: list[list[float]] = []
-    dimension: int | None = None
-    for index, raw_vector in enumerate(value, start=1):
-        if not isinstance(raw_vector, (list, tuple)) or not raw_vector:
-            raise RetrievalError(f"{label} vector {index} must be a non-empty array")
-        vector: list[float] = []
-        for component in raw_vector:
-            if isinstance(component, bool) or not isinstance(component, (int, float)):
-                raise RetrievalError(f"{label} vector {index} contains a non-number")
-            numeric = float(component)
-            if not math.isfinite(numeric):
-                raise RetrievalError(f"{label} vector {index} contains NaN or infinity")
-            vector.append(numeric)
-        if dimension is None:
-            dimension = len(vector)
-        elif len(vector) != dimension:
-            raise RetrievalError(f"{label} vectors have inconsistent dimensions")
-        if math.sqrt(sum(component * component for component in vector)) == 0.0:
-            raise RetrievalError(f"{label} vector {index} is a zero vector")
-        vectors.append(vector)
-    return vectors
-
-
-def embed_texts(provider: EmbeddingProvider, texts: list[str], model: str) -> list[list[float]]:
-    try:
-        raw_vectors = provider(texts, model=model)
-    except Exception as exc:
-        raise RetrievalError(f"embedding provider failed: {exc}") from exc
-    return validate_vectors(raw_vectors, len(texts), "embedding provider")
-
-
 def build_index(args: argparse.Namespace) -> dict[str, Any]:
     require_output_permission(args.output, replace=args.replace, label="retrieval index output")
     documents = load_documents(args.corpus)
@@ -315,26 +238,7 @@ def build_index(args: argparse.Namespace) -> dict[str, Any]:
     backend_used = backend_requested
     fallback_reason: str | None = None
     model: str | None = None
-    provider_version: str | None
-
-    if backend_requested == "embedding":
-        model = require_string(args.model, "embedding model")
-        provider_version = require_string(args.provider_version, "embedding provider version")
-        try:
-            provider = load_embedding_provider(args.embedding_provider)
-        except EmbeddingUnavailableError as exc:
-            if args.fallback != "lexical":
-                raise
-            backend_used = "lexical"
-            fallback_reason = str(exc)
-        else:
-            vectors = embed_texts(provider, [chunk["snippet"] for chunk in chunks], model)
-            for chunk, vector in zip(chunks, vectors):
-                chunk["embedding"] = vector
-    elif backend_requested == "lexical":
-        provider_version = "python-stdlib"
-    else:
-        provider_version = "host-managed"
+    provider_version = "python-stdlib" if backend_requested == "lexical" else "host-managed"
 
     index = {
         "schema_version": SCHEMA_VERSION,
@@ -372,21 +276,10 @@ def load_index(path: Path) -> dict[str, Any]:
     backend_requested = index["backend_requested"]
     backend_used = index["backend_used"]
     fallback_reason = index["fallback_reason"]
-    if backend_requested == backend_used:
-        if fallback_reason is not None:
-            raise RetrievalError("retrieval index fallback metadata is inconsistent")
-    elif not (
-        backend_requested == "embedding"
-        and backend_used == "lexical"
-        and isinstance(fallback_reason, str)
-        and fallback_reason.strip()
-    ):
+    if backend_requested != backend_used or fallback_reason is not None:
         raise RetrievalError("retrieval index fallback metadata is inconsistent")
-    if backend_requested == "embedding":
-        require_string(index["model"], "retrieval index embedding model")
-        require_string(index["provider_version"], "retrieval index provider version")
-    elif index["model"] is not None:
-        raise RetrievalError("non-embedding retrieval index must not record a model")
+    if index["model"] is not None:
+        raise RetrievalError("retrieval index must not record a model")
     if backend_requested == "lexical" and index["provider_version"] != "python-stdlib":
         raise RetrievalError("lexical retrieval index provider version is invalid")
     if backend_requested == "host" and index["provider_version"] != "host-managed":
@@ -416,8 +309,7 @@ def load_index(path: Path) -> dict[str, Any]:
         raise RetrievalError("retrieval index requires non-empty chunks")
     chunk_ids: set[str] = set()
     for position, chunk in enumerate(chunks, start=1):
-        expected = CHUNK_FIELDS | ({"embedding"} if index["backend_used"] == "embedding" else set())
-        if not isinstance(chunk, dict) or set(chunk) != expected:
+        if not isinstance(chunk, dict) or set(chunk) != CHUNK_FIELDS:
             raise RetrievalError(f"retrieval index chunk {position} fields are invalid")
         for field in CHUNK_FIELDS - {"url"}:
             require_string(chunk[field], f"retrieval index chunk {position} {field}")
@@ -428,20 +320,7 @@ def load_index(path: Path) -> dict[str, Any]:
         if chunk["chunk_id"] in chunk_ids:
             raise RetrievalError(f"duplicate retrieval index chunk id: {chunk['chunk_id']!r}")
         chunk_ids.add(chunk["chunk_id"])
-    if index["backend_used"] == "embedding":
-        validate_vectors(
-            [chunk["embedding"] for chunk in chunks], len(chunks), "retrieval index embeddings"
-        )
     return index
-
-
-def cosine_score(left: list[float], right: list[float]) -> float:
-    if len(left) != len(right):
-        raise RetrievalError("query and index embedding dimensions do not match")
-    numerator = sum(a * b for a, b in zip(left, right))
-    left_norm = math.sqrt(sum(value * value for value in left))
-    right_norm = math.sqrt(sum(value * value for value in right))
-    return round(numerator / (left_norm * right_norm), 12)
 
 
 def host_scores(
@@ -492,19 +371,7 @@ def ranked_chunks(
     fallback_reason = index["fallback_reason"]
     if backend == "host":
         return host_scores(chunks, args.host_results), "host", fallback_reason
-    if backend == "lexical":
-        scores = lexical_scores(chunks, args.query)
-    else:
-        try:
-            provider = load_embedding_provider(args.embedding_provider)
-            query_vector = embed_texts(provider, [args.query], index["model"])[0]
-            scores = [cosine_score(query_vector, chunk["embedding"]) for chunk in chunks]
-        except EmbeddingUnavailableError as exc:
-            if args.fallback != "lexical":
-                raise
-            scores = lexical_scores(chunks, args.query)
-            backend = "lexical"
-            fallback_reason = str(exc)
+    scores = lexical_scores(chunks, args.query)
     ranked = [(chunk, score) for chunk, score in zip(chunks, scores) if score > 0.0]
     ranked.sort(key=lambda item: (-item[1], item[0]["source_id"], item[0]["chunk_id"]))
     return ranked, backend, fallback_reason
@@ -600,10 +467,6 @@ def build_parser() -> argparse.ArgumentParser:
     index_parser.add_argument("--output", type=Path, required=True)
     index_parser.add_argument("--chunk-size", type=int, default=1200)
     index_parser.add_argument("--chunk-overlap", type=int, default=200)
-    index_parser.add_argument("--embedding-provider")
-    index_parser.add_argument("--model")
-    index_parser.add_argument("--provider-version")
-    index_parser.add_argument("--fallback", choices=("lexical",))
     index_parser.add_argument("--replace", action="store_true")
     index_parser.set_defaults(handler=build_index)
 
@@ -616,8 +479,6 @@ def build_parser() -> argparse.ArgumentParser:
     search_parser.add_argument("--output", type=Path)
     search_parser.add_argument("--replace-output", action="store_true")
     search_parser.add_argument("--host-results", type=Path)
-    search_parser.add_argument("--embedding-provider")
-    search_parser.add_argument("--fallback", choices=("lexical",))
     search_parser.set_defaults(handler=search_index)
     return parser
 

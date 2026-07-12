@@ -16,8 +16,6 @@ FIXTURES = ROOT / "tests" / "fixtures" / "retrieval"
 CLASSIC_FIXTURES = ROOT / "tests" / "fixtures" / "classic-run"
 CORPUS = FIXTURES / "corpus.jsonl"
 HOST_RESULTS = FIXTURES / "host-results.jsonl"
-EMBEDDING_PROVIDER = FIXTURES / "fake_embedding_provider.py"
-BAD_EMBEDDING_PROVIDER = FIXTURES / "bad_embedding_provider.py"
 
 
 class RetrievalBackendTests(unittest.TestCase):
@@ -130,113 +128,37 @@ class RetrievalBackendTests(unittest.TestCase):
             report = json.loads(result.stdout)
             self.assertEqual(report["results"][0]["source_id"], "S3")
 
-    def test_embedding_provider_is_explicit_and_supports_a_real_optional_path(self) -> None:
+    def test_dynamic_embedding_provider_surface_is_not_exposed(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            provider = f"{EMBEDDING_PROVIDER}:embed"
-            index_path, index = self.build_index(
-                root,
-                backend="embedding",
-                extra_args=(
-                    "--embedding-provider",
-                    provider,
-                    "--model",
-                    "fixture-embedding-v1",
-                    "--provider-version",
-                    "fixture-1",
-                ),
+            rejected_backend = self.run_cli(
+                "index",
+                "--backend",
+                "embedding",
+                "--corpus",
+                str(CORPUS),
+                "--output",
+                str(root / "embedding.json"),
+                expected_returncode=2,
             )
-            self.assertEqual(index["backend_used"], "embedding")
-            self.assertEqual(index["model"], "fixture-embedding-v1")
-            self.assertEqual(index["provider_version"], "fixture-1")
+            self.assertIn("invalid choice", rejected_backend.stderr)
 
-            result = self.run_cli(
+            index_path, _ = self.build_index(root)
+            rejected_provider = self.run_cli(
                 "search",
                 "--index",
                 str(index_path),
                 "--query",
                 "citation audit",
-                "--top-k",
-                "1",
                 "--embedding-provider",
-                provider,
-            )
-            report = json.loads(result.stdout)
-            self.assertEqual(report["backend_used"], "embedding")
-            self.assertEqual(report["algorithm"], "cosine-similarity-v1")
-            self.assertEqual(report["results"][0]["source_id"], "S2")
-
-    def test_embedding_unavailability_fails_or_explicitly_falls_back(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            missing_index = root / "missing.json"
-            rejected = self.run_cli(
-                "index",
-                "--backend",
-                "embedding",
-                "--corpus",
-                str(CORPUS),
-                "--output",
-                str(missing_index),
-                "--model",
-                "missing-model",
-                "--provider-version",
-                "missing",
+                "untrusted.py:embed",
                 expected_returncode=2,
             )
-            self.assertIn("embedding backend requires --embedding-provider", rejected.stderr)
-            self.assertFalse(missing_index.exists())
+            self.assertIn("unrecognized arguments", rejected_provider.stderr)
 
-            fallback_index = root / "fallback.json"
-            result = self.run_cli(
-                "index",
-                "--backend",
-                "embedding",
-                "--corpus",
-                str(CORPUS),
-                "--output",
-                str(fallback_index),
-                "--model",
-                "missing-model",
-                "--provider-version",
-                "missing",
-                "--fallback",
-                "lexical",
-            )
-            report = json.loads(result.stdout)
-            self.assertEqual(report["backend_requested"], "embedding")
-            self.assertEqual(report["backend_used"], "lexical")
-            self.assertIn("embedding backend requires", report["fallback_reason"])
-
-    def test_invalid_embedding_vectors_and_tampered_indexes_fail_closed(self) -> None:
+    def test_tampered_index_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            for provider_name, expected_error in (
-                ("zero", "zero vector"),
-                ("non_finite", "NaN or infinity"),
-                ("inconsistent", "inconsistent dimensions"),
-            ):
-                with self.subTest(provider=provider_name):
-                    rejected = self.run_cli(
-                        "index",
-                        "--backend",
-                        "embedding",
-                        "--corpus",
-                        str(CORPUS),
-                        "--output",
-                        str(root / f"{provider_name}.json"),
-                        "--embedding-provider",
-                        f"{BAD_EMBEDDING_PROVIDER}:{provider_name}",
-                        "--model",
-                        "bad-fixture",
-                        "--provider-version",
-                        "fixture-1",
-                        "--fallback",
-                        "lexical",
-                        expected_returncode=2,
-                    )
-                    self.assertIn(expected_error, rejected.stderr)
-
             index_path, index = self.build_index(root)
             index["chunks"][0]["snippet_hash"] = "0" * 64
             index_path.write_text(
@@ -251,35 +173,6 @@ class RetrievalBackendTests(unittest.TestCase):
                 expected_returncode=2,
             )
             self.assertIn("snippet hash is invalid", rejected.stderr)
-
-            embedding_path, embedding_index = self.build_index(
-                root,
-                backend="embedding",
-                extra_args=(
-                    "--embedding-provider",
-                    f"{EMBEDDING_PROVIDER}:embed",
-                    "--model",
-                    "fixture-embedding-v1",
-                    "--provider-version",
-                    "fixture-1",
-                ),
-            )
-            embedding_index["fallback_reason"] = "forged fallback"
-            embedding_path.write_text(
-                json.dumps(embedding_index, ensure_ascii=False, indent=2) + "\n",
-                encoding="utf-8",
-            )
-            rejected = self.run_cli(
-                "search",
-                "--index",
-                str(embedding_path),
-                "--query",
-                "citation audit",
-                "--embedding-provider",
-                f"{EMBEDDING_PROVIDER}:embed",
-                expected_returncode=2,
-            )
-            self.assertIn("fallback metadata is inconsistent", rejected.stderr)
 
     def test_host_backend_requires_and_records_explicit_ranked_results(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
