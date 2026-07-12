@@ -703,10 +703,11 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
         "experimental retrieval must be bundled without changing execution backend semantics",
     )
     require(
-        "zero-dependency deterministic fallback" in retrieval_text.lower()
-        and "explicit `--fallback lexical`" in retrieval_text.lower()
-        and "never installs" in retrieval_text.lower(),
-        "retrieval contract must keep lexical zero-dependency and embedding fallback explicit",
+        "zero-dependency deterministic corpus path" in retrieval_text.lower()
+        and "--backend host|lexical" in retrieval_text
+        and "never installs" in retrieval_text.lower()
+        and "--embedding-provider" not in retrieval_text,
+        "retrieval contract must keep host/lexical routing data-only and zero-dependency",
     )
     require(
         "default evidence path" in skill_text.lower()
@@ -744,12 +745,10 @@ def validate_behavior_contracts(skill_text: str, openai_text: str) -> None:
         "official runner documentation must match the supported stable version range",
     )
     require(
-        "execute in-process" in contributing_text.lower()
-        and re.search(
-            r"may\s+have arbitrary side effects", contributing_text.lower()
-        )
-        is not None,
-        "contributor docs must describe trusted embedding provider execution accurately",
+        "must never import or execute" in contributing_text.lower()
+        and "provider code" in contributing_text.lower()
+        and "contact external services" in contributing_text.lower(),
+        "contributor docs must preserve the data-only retrieval boundary",
     )
     require(
         "compatibility index" in method_text.lower()

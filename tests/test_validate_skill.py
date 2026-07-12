@@ -155,16 +155,30 @@ class GuardedRoutingRegressionTests(unittest.TestCase):
         self.assertIn("unified guarded state", local_runner_text)
         self.assertIn("citation audit", local_runner_text)
 
-    def test_optional_retrieval_does_not_change_execution_backend_semantics(self) -> None:
+    def test_retrieval_does_not_change_execution_backend_semantics(self) -> None:
         skill_text = VALIDATOR.SKILL_FILE.read_text(encoding="utf-8")
         retrieval_text = (
             VALIDATOR.SKILL_DIR / "references" / "retrieval-backends.md"
         ).read_text(encoding="utf-8")
 
         self.assertRegex(skill_text, r"not execution\s+backend\s+values")
-        self.assertIn("zero-dependency deterministic fallback", retrieval_text)
-        self.assertIn("explicit `--fallback lexical`", retrieval_text)
+        self.assertIn("zero-dependency deterministic corpus path", retrieval_text)
+        self.assertIn("--backend host|lexical", retrieval_text)
         self.assertIn("never installs", retrieval_text)
+        self.assertNotIn("--embedding-provider", retrieval_text)
+
+    def test_shipped_runtime_has_no_dynamic_python_loader(self) -> None:
+        for script_name in ("retrieval_backend.py", "runner_adapter.py"):
+            script_text = (
+                VALIDATOR.SKILL_DIR / "scripts" / script_name
+            ).read_text(encoding="utf-8")
+            self.assertNotIn("spec_from_file_location", script_text)
+            self.assertNotIn(".exec_module(", script_text)
+        retrieval_text = (
+            VALIDATOR.SKILL_DIR / "scripts" / "retrieval_backend.py"
+        ).read_text(encoding="utf-8")
+        self.assertNotIn("--embedding-provider", retrieval_text)
+        self.assertNotIn("importlib.import_module", retrieval_text)
 
     def test_official_runner_adapter_is_optional_secret_safe_and_classic_only(self) -> None:
         skill_text = VALIDATOR.SKILL_FILE.read_text(encoding="utf-8")
@@ -191,7 +205,7 @@ class GuardedRoutingRegressionTests(unittest.TestCase):
         self.assertIn("Default retrieval intent", skill_text)
         self.assertIn("Ordinary Agent-led research", skill_text)
         self.assertIn("user-provided local corpus", skill_text)
-        self.assertIn("explicit embedding provider", skill_text)
+        self.assertIn("backend values (`host` and `lexical`)", skill_text)
         self.assertIn("official Classic STORM output directory", skill_text)
         self.assertIn("Do not ask the user for an internal batch", skill_text)
         self.assertIn("default evidence path", skill_text)

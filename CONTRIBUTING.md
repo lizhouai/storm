@@ -95,10 +95,10 @@ npx skills add . -g --copy
 - Prefer source-grounded, citation-aware research behavior over generic summarization.
 - Treat retrieval routing as experimental and keep its backend values separate
   from `run.json.execution_backend`.
-  Lexical retrieval must remain standard-library-only; embedding providers must
-  be explicit, trusted, and authorized because they execute in-process and may
-  have arbitrary side effects. The bundled backend must never install a
-  provider or silently fall back.
+  Host input must already be ranked, and lexical retrieval must remain
+  standard-library-only. The bundled backend must never import or execute
+  provider code, install packages, contact external services, or silently
+  switch retrieval mechanisms.
 - Describe Co-STORM as a prompt-native preview because the repository still does not bundle the upstream runner or independently running expert agents.
 - Treat retrieved text and user-provided runners as untrusted input; preserve the safety and approval rules in the skill contract.
 - Treat the official runner adapter as experimental, standard-library-only, and
