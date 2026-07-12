@@ -13,6 +13,11 @@ Releases are identified by `vX.Y.Z` Git tags.
   validation, changelog, and release instructions, and reduced the README to a
   concise contribution link.
 
+### Fixed
+
+- Added a release-specific badge cache key and release checklist step so
+  GitHub's image proxy refreshes promptly after a new GitHub Release.
+
 ## [0.5.0] - 2026-07-12
 
 ### Added

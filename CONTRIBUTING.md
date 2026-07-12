@@ -150,10 +150,12 @@ For maintainers preparing a release:
 4. Confirm `npx skills add lizhouai/storm-research-skill` discovers `storm` and includes the full bundle.
 5. Move the completed changes from `CHANGELOG.md`'s `Unreleased` section into
    the dated release entry and keep the comparison links current.
-6. Review the behavior cases and document any known gaps in the release notes.
-7. Commit with a clear English message and create an annotated Git tag.
-8. Push only after explicit approval to publish.
-9. Create a GitHub Release for the approved tag and mark it as latest when appropriate.
+6. Update the README release badge's `cacheBust` value to the new Git tag so
+   GitHub's image proxy does not keep displaying the previous release.
+7. Review the behavior cases and document any known gaps in the release notes.
+8. Commit with a clear English message and create an annotated Git tag.
+9. Push only after explicit approval to publish.
+10. Create a GitHub Release for the approved tag and mark it as latest when appropriate.
 
 ## Pull Requests
 
