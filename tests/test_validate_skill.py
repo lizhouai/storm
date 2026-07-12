@@ -167,6 +167,25 @@ class GuardedRoutingRegressionTests(unittest.TestCase):
         self.assertIn("never copies prompts", adapter_text)
         self.assertIn("Classic `STORMWikiRunner`", adapter_text)
 
+    def test_optional_features_route_from_user_intent_without_batch_labels(self) -> None:
+        skill_text = VALIDATOR.SKILL_FILE.read_text(encoding="utf-8")
+        retrieval_text = (
+            VALIDATOR.SKILL_DIR / "references" / "retrieval-backends.md"
+        ).read_text(encoding="utf-8")
+        adapter_text = (
+            VALIDATOR.SKILL_DIR / "references" / "knowledge-storm-adapter.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("Default retrieval intent", skill_text)
+        self.assertIn("Ordinary Agent-led research", skill_text)
+        self.assertIn("user-provided local corpus", skill_text)
+        self.assertIn("explicit embedding provider", skill_text)
+        self.assertIn("official Classic STORM output directory", skill_text)
+        self.assertIn("Do not ask the user for an internal batch", skill_text)
+        self.assertNotRegex(
+            "\n".join((skill_text, retrieval_text, adapter_text)), r"\bB[56]\b"
+        )
+
 
 class ForwardEvalSchemaRegressionTests(unittest.TestCase):
     def test_eval_fixture_has_executable_forward_oracles(self) -> None:

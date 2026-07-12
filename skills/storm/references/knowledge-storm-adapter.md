@@ -1,7 +1,10 @@
 # Official Knowledge STORM Adapter
 
-Load this reference only for an installed or separately executed official
-Classic `STORMWikiRunner`. The bundle includes an import adapter, not
+Load this reference when the user provides an output directory from an already
+executed official Classic STORM run or asks to import or synchronize that run
+into the guarded workflow. Infer this from the described source and goal; do
+not require an adapter name or implementation-stage label. The bundle includes
+an import adapter, not
 `knowledge-storm`, DSPy, models, retrievers, credentials, or an executable
 Co-STORM runtime. The tested file contract is `knowledge-storm` 1.1.x; version
 discovery uses distribution metadata because the upstream module version may

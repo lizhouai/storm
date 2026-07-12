@@ -6,7 +6,10 @@ description: >-
   user-provided local runner, and a prompt-native Co-STORM interactive preview.
   Use when the user explicitly asks for STORM or Co-STORM, a technical or
   literature survey, a cited background report, source comparison, an existing
-  local STORM pipeline, or a steerable research roundtable or mind map.
+  local STORM pipeline, research over a local corpus, import or synchronization
+  of official Classic STORM output, or a steerable research roundtable or mind
+  map. Infer retrieval and runner adaptation from the user's inputs; the user
+  does not need to know implementation backend or adapter names.
 ---
 
 # STORM Research
@@ -27,11 +30,37 @@ and preserve the user's source, file, language, and side-effect boundaries.
 Do not load the complete Co-STORM procedure for a Classic request or the full
 Classic artifact procedure for an interactive-only request. The compatibility
 index at `references/storm-method.md` points older callers to the split files.
-Load `references/retrieval-backends.md` only when the user selects a retrieval
-backend, a local corpus needs deterministic lexical search, or embedding is
-explicitly requested.
-Load `references/knowledge-storm-adapter.md` only when the user asks to adapt an
-installed or separately executed official Classic `STORMWikiRunner`.
+
+## Capability Router
+
+Users describe research goals and available inputs, not internal implementation
+stages. Do not ask the user for an internal batch, backend, or adapter label.
+Select the capability from intent and describe it in user terms such as
+"search the available sources", "search this local corpus", or "import this
+existing STORM run".
+
+### Default retrieval intent
+
+| User intent or available input | Internal retrieval choice |
+|---|---|
+| Ordinary Agent-led research without a user-provided local corpus or provider | Use the Agent's available search/retrieval tools, then pass its explicitly ranked evidence through `host` so the selection is traced |
+| A user-provided local corpus without an explicit embedding provider | Use deterministic `lexical` retrieval and stay inside the corpus boundary |
+| An explicit embedding provider, model, and provider version | Use `embedding`; do not discover or install a provider |
+| An explicit user choice among supported retrieval mechanisms | Honor it if it stays within the stated source and authority boundaries |
+
+Load `references/retrieval-backends.md` whenever evidence retrieval is needed
+for guarded research and apply the table above without making the user select
+an implementation term. A plain request such as "use STORM to research RAG"
+therefore uses ordinary Agent-led retrieval and records it through the host
+path. Chat-only requests may keep evidence conversation-local, but must not
+claim that a persisted retrieval trace exists.
+
+Treat a user-provided official Classic STORM output directory, or a request to
+import or synchronize an already executed official run, as runner-adaptation
+intent. Select Local Runner STORM and load
+`references/knowledge-storm-adapter.md`; do not require the user to name the
+adapter. Merely asking to research a topic does not select runner adaptation,
+because there is no external run to import.
 
 If the prompt is Chinese, use Chinese by default while preserving standard
 English technical terms. Keep the display topic separate from filesystem slugs.

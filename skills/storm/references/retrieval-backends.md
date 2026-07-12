@@ -1,10 +1,12 @@
 # Optional Retrieval Backends
 
-Load this reference only when the user selects a retrieval backend, provides a
-local corpus that needs deterministic search, or explicitly requests embedding
-retrieval. A retrieval backend chooses evidence; it is separate from
-`execution_backend`, which still records `guarded-agent`, `prompt-only`, or
-`local-runner`.
+Load this reference when guarded research needs evidence retrieval. Infer the
+mechanism from the user's available inputs: ordinary Agent-led research uses
+host-ranked results, a user-provided local corpus uses deterministic lexical
+search, and an explicitly configured provider/model/version uses embedding
+retrieval. Users do not need to know or name these implementation mechanisms.
+A retrieval backend chooses evidence; it is separate from `execution_backend`,
+which still records `guarded-agent`, `prompt-only`, or `local-runner`.
 
 ## Backend Contract
 
