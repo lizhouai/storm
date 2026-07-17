@@ -7,6 +7,23 @@ Releases are identified by `vX.Y.Z` Git tags.
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-07-17
+
+### Security
+
+- Clarified that bundled retrieval and runner-adaptation scripts accept
+  data-only formats, use release-fixed imports, and do not launch the optional
+  upstream runner, install packages, or contact the network.
+- Replaced the runner adapter's type-narrowing assertions with explicit
+  fail-closed errors so required-input invariants remain enforced under
+  optimized Python.
+
+### Changed
+
+- Refreshed the published skill bundle so external security providers can
+  audit a distinct `v0.6.1` snapshot instead of reusing cached `v0.6.0`
+  results.
+
 ## [0.6.0] - 2026-07-12
 
 ### Security
@@ -141,7 +158,8 @@ Releases are identified by `vX.Y.Z` Git tags.
 - Added upstream attribution, the public installation path, and the MIT
   License.
 
-[Unreleased]: https://github.com/lizhouai/storm-research-skill/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/lizhouai/storm-research-skill/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/lizhouai/storm-research-skill/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/lizhouai/storm-research-skill/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/lizhouai/storm-research-skill/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/lizhouai/storm-research-skill/compare/v0.4.0...v0.4.1

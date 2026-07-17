@@ -179,6 +179,11 @@ class GuardedRoutingRegressionTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertNotIn("--embedding-provider", retrieval_text)
         self.assertNotIn("importlib.import_module", retrieval_text)
+        safety_text = (
+            VALIDATOR.SKILL_DIR / "references" / "safety-contract.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("accept data-only formats", safety_text)
+        self.assertIn("Runtime imports are fixed by the release", safety_text)
 
     def test_official_runner_adapter_is_optional_secret_safe_and_classic_only(self) -> None:
         skill_text = VALIDATOR.SKILL_FILE.read_text(encoding="utf-8")

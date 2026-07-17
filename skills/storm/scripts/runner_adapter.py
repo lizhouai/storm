@@ -791,7 +791,8 @@ def action_outputs(
         )
         output_name = filename.replace(".txt", ".html")
         text = read_source_text(source, filename)
-        assert text is not None
+        if text is None:
+            raise AdapterError(f"missing required runner output: {filename}")
         rendered = render_html(
             title=f"{state['topic']} - {'Direct' if action == 'generate_direct_outline' else 'Refined'} outline",
             markdown_text=text,
@@ -801,7 +802,8 @@ def action_outputs(
         return {staging / output_name: rendered.encode("utf-8")}, True, []
     if action == "write_draft":
         text = read_source_text(source, "storm_gen_article.txt")
-        assert text is not None
+        if text is None:
+            raise AdapterError("missing required runner output: storm_gen_article.txt")
         references, _ = load_reference_map(source, "url_to_info.json", text)
         rendered = render_html(
             title=f"{state['topic']} - Draft",
@@ -817,7 +819,10 @@ def action_outputs(
         }, True, []
     if action == "polish_article":
         text = read_source_text(source, "storm_gen_article_polished.txt")
-        assert text is not None
+        if text is None:
+            raise AdapterError(
+                "missing required runner output: storm_gen_article_polished.txt"
+            )
         references, used_ids = load_reference_map(
             source, "polished_url_to_info.json", text
         )
